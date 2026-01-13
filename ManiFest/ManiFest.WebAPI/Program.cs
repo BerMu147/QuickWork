@@ -1,10 +1,10 @@
-using ManiFest.Services.Database;
+using MoSmartPark.Services.Database;
 using Mapster;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
-using ManiFest.WebAPI.Filters;
-using ManiFest.Services.Services;
-using ManiFest.Services.Interfaces;
+using MoSmartPark.WebAPI.Filters;
+using MoSmartPark.Services.Services;
+using MoSmartPark.Services.Interfaces;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
@@ -17,10 +17,20 @@ builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IRoleService, RoleService>();
 builder.Services.AddTransient<IGenderService, GenderService>();
 builder.Services.AddTransient<ICityService, CityService>();
+builder.Services.AddTransient<IParkingSpotTypeService, ParkingSpotTypeService>();
+builder.Services.AddTransient<IParkingZoneService, ParkingZoneService>();
+builder.Services.AddTransient<IParkingSpotService, ParkingSpotService>();
+builder.Services.AddTransient<IBrandService, BrandService>();
+builder.Services.AddTransient<IColorService, ColorService>();
+builder.Services.AddTransient<ICarService, CarService>();
+builder.Services.AddTransient<IReservationTypeService, ReservationTypeService>();
+builder.Services.AddTransient<IReservationService, ReservationService>();
+builder.Services.AddTransient<IReviewService, ReviewService>();
+builder.Services.AddTransient<IBusinessReportService, BusinessReportService>();
 
 
 // Configure database
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=.;Database=ManiFestDb;User Id=sa;Password=QWEasd123!;TrustServerCertificate=True;Trusted_Connection=True;";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=.;Database=MoSmartParkDb;User Id=sa;Password=QWEasd123!;TrustServerCertificate=True;Trusted_Connection=True;";
 builder.Services.AddDatabaseServices(connectionString);
 
 // Add configuration
@@ -75,13 +85,14 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dataContext = scope.ServiceProvider.GetRequiredService<ManiFestDbContext>();
+    var dataContext = scope.ServiceProvider.GetRequiredService<MoSmartParkDbContext>();
 
 
     var pendingMigrations = dataContext.Database.GetPendingMigrations().Any();
@@ -93,16 +104,20 @@ using (var scope = app.Services.CreateScope())
 
 
     }
+    
+    // Run dynamic data seeder
+    await DynamicDataSeeder.SeedAsync(dataContext);
+    
     // Train the recommender model in background after startup
-    //_ = Task.Run(async () =>  // The underscore tells the compiler we're intentionally ignoring the result
-    //{
-    //    // Wait a bit for the app to fully start
-    //    await Task.Delay(2000);
-    //    using (var trainingScope = app.Services.CreateScope())
-    //    {
-    //        RecommenderService.TrainModelAtStartup(trainingScope.ServiceProvider);
-    //    }
-    //});
+    _ = Task.Run(async () =>  // The underscore tells the compiler we're intentionally ignoring the result
+    {
+        // Wait a bit for the app to fully start
+        await Task.Delay(2000);
+        using (var trainingScope = app.Services.CreateScope())
+        {
+            ParkingSpotService.TrainRecommenderAtStartup(trainingScope.ServiceProvider);
+        }
+    });
 }
 
 app.Run();
