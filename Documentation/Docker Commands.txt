@@ -1,0 +1,16 @@
+-- Pokretanje image dockera sa imenom CallQuickWork
+
+docker build -t CallQuickWork .
+
+-- Pregled svih image-a
+
+docker image ls
+
+-- Pokretanje instance image-a na portu callQuickWork_dev naziv instance , CallQuickWork naziv image-a
+ 
+docker run -p 5130:5130 --name callQuickWork_dev CallQuickWork
+
+-- Dizanje dockera
+
+docker-compose up --build -- 
+
