@@ -1,14 +1,14 @@
--- Pokretanje image dockera sa imenom CallTaxi
+-- Pokretanje image dockera sa imenom CallQuickWork
 
-docker build -t calltaxi .
+docker build -t CallQuickWork .
 
 -- Pregled svih image-a
 
 docker image ls
 
--- Pokretanje instance image-a na portu calltaxi_dev naziv instance , calltaxi naziv image-a
+-- Pokretanje instance image-a na portu callQuickWork_dev naziv instance , CallQuickWork naziv image-a
  
-docker run -p 5130:5130 --name calltaxi_dev calltaxi
+docker run -p 5130:5130 --name callQuickWork_dev CallQuickWork
 
 -- Dizanje dockera
 
