@@ -386,6 +386,60 @@ namespace QuickWork.Services.Migrations
                         .IsUnique();
 
                     b.ToTable("JobApplications");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ApplicantUserId = 3,
+                            AppliedAt = new DateTime(2026, 1, 2, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsActive = true,
+                            JobPostingId = 1,
+                            Message = "Imam veliko iskustvo sa djecom. Radila sam kao babysitter 3 godine. Volim djecu i odgovorna sam osoba.",
+                            Status = "Pending"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ApplicantUserId = 1,
+                            AppliedAt = new DateTime(2026, 1, 2, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsActive = true,
+                            JobPostingId = 2,
+                            Message = "Certificirani vodoinstalater sa 5 godina iskustva. Mogu doći sutra.",
+                            RespondedAt = new DateTime(2026, 1, 3, 0, 0, 0, 0, DateTimeKind.Local),
+                            Status = "Accepted"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ApplicantUserId = 2,
+                            AppliedAt = new DateTime(2026, 1, 3, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsActive = true,
+                            JobPostingId = 3,
+                            Message = "Profesionalni fotograf sa 10 godina iskustva u event fotografiji. Imam profesionalnu opremu.",
+                            Status = "Pending"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ApplicantUserId = 3,
+                            AppliedAt = new DateTime(2025, 12, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsActive = true,
+                            JobPostingId = 4,
+                            Message = "Fizički sam sposobna i imam iskustva sa selidbama.",
+                            RespondedAt = new DateTime(2025, 12, 28, 0, 0, 0, 0, DateTimeKind.Local),
+                            Status = "Accepted"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ApplicantUserId = 1,
+                            AppliedAt = new DateTime(2026, 1, 2, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsActive = true,
+                            JobPostingId = 5,
+                            Message = "Volim rad u prirodi i imam iskustva sa vrtlarstvom.",
+                            Status = "Pending"
+                        });
                 });
 
             modelBuilder.Entity("QuickWork.Services.Database.JobPosting", b =>
@@ -464,6 +518,99 @@ namespace QuickWork.Services.Migrations
                     b.HasIndex("Status");
 
                     b.ToTable("JobPostings");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Address = "Ulica Zmaja od Bosne 12",
+                            CategoryId = 12,
+                            CityId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            Description = "Tražim pouzdanu osobu za čuvanje dvoje djece (5 i 8 godina) tokom vikenda. Potrebno iskustvo sa djecom.",
+                            EstimatedDurationHours = 8.0m,
+                            IsActive = true,
+                            PaymentAmount = 50.00m,
+                            PostedByUserId = 2,
+                            ScheduledDate = new DateTime(2026, 2, 15, 0, 0, 0, 0, DateTimeKind.Local),
+                            ScheduledTimeEnd = new TimeSpan(0, 17, 0, 0, 0),
+                            ScheduledTimeStart = new TimeSpan(0, 9, 0, 0, 0),
+                            Status = "Open",
+                            Title = "Potreban babysitter za vikend"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Address = "Trg Slobode 5",
+                            CategoryId = 11,
+                            CityId = 5,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            Description = "Hitno potreban vodoinstalater za popravku curenja slavine u kupatilu. Jednostavan posao.",
+                            EstimatedDurationHours = 2.0m,
+                            IsActive = true,
+                            PaymentAmount = 30.00m,
+                            PostedByUserId = 3,
+                            ScheduledDate = new DateTime(2026, 2, 10, 0, 0, 0, 0, DateTimeKind.Local),
+                            ScheduledTimeEnd = new TimeSpan(0, 16, 0, 0, 0),
+                            ScheduledTimeStart = new TimeSpan(0, 14, 0, 0, 0),
+                            Status = "InProgress",
+                            Title = "Vodoinstalater za popravku slavine"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Address = "Restoran Kod Muje, Ferhadija 20",
+                            CategoryId = 3,
+                            CityId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            Description = "Tražim profesionalnog fotografa za snimanje dječijeg rođendana. Potrebno iskustvo sa event fotografijom.",
+                            EstimatedDurationHours = 4.0m,
+                            IsActive = true,
+                            PaymentAmount = 100.00m,
+                            PostedByUserId = 1,
+                            ScheduledDate = new DateTime(2026, 2, 20, 0, 0, 0, 0, DateTimeKind.Local),
+                            ScheduledTimeEnd = new TimeSpan(0, 19, 0, 0, 0),
+                            ScheduledTimeStart = new TimeSpan(0, 15, 0, 0, 0),
+                            Status = "Open",
+                            Title = "Fotograf za rođendan"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Address = "Grbavica, Safvet-bega Bašagića 15",
+                            CategoryId = 2,
+                            CityId = 1,
+                            CompletedAt = new DateTime(2026, 1, 25, 14, 30, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            Description = "Potrebna pomoć za seljenje stana. Nosenje kutija i namještaja. Fizički zahtjevan posao.",
+                            EstimatedDurationHours = 6.0m,
+                            IsActive = true,
+                            PaymentAmount = 80.00m,
+                            PostedByUserId = 2,
+                            ScheduledDate = new DateTime(2026, 1, 25, 0, 0, 0, 0, DateTimeKind.Local),
+                            ScheduledTimeEnd = new TimeSpan(0, 14, 0, 0, 0),
+                            ScheduledTimeStart = new TimeSpan(0, 8, 0, 0, 0),
+                            Status = "Completed",
+                            Title = "Pomoć u selidbi"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Address = "Crkvice, Ulica Maršala Tita 88",
+                            CategoryId = 9,
+                            CityId = 5,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            Description = "Potreban vrtlar za košenje trave i uređenje cvijeća u dvorištu. Alat obezbijeđen.",
+                            EstimatedDurationHours = 3.0m,
+                            IsActive = true,
+                            PaymentAmount = 40.00m,
+                            PostedByUserId = 3,
+                            ScheduledDate = new DateTime(2026, 2, 18, 0, 0, 0, 0, DateTimeKind.Local),
+                            ScheduledTimeEnd = new TimeSpan(0, 13, 0, 0, 0),
+                            ScheduledTimeStart = new TimeSpan(0, 10, 0, 0, 0),
+                            Status = "Open",
+                            Title = "Vrtlar za uređenje dvorišta"
+                        });
                 });
 
             modelBuilder.Entity("QuickWork.Services.Database.Message", b =>
@@ -508,6 +655,51 @@ namespace QuickWork.Services.Migrations
                     b.HasIndex("SentAt");
 
                     b.ToTable("Messages");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Content = "Zdravo! Hvala na prijavi. Da li imate reference od prethodnih poslova?",
+                            IsRead = true,
+                            JobPostingId = 1,
+                            ReadAt = new DateTime(2026, 1, 3, 2, 0, 0, 0, DateTimeKind.Local),
+                            ReceiverUserId = 3,
+                            SenderUserId = 2,
+                            SentAt = new DateTime(2026, 1, 3, 0, 0, 0, 0, DateTimeKind.Local)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Content = "Naravno! Mogu vam poslati kontakte prethodnih poslodavaca. Radila sam za 5 porodica u Sarajevu.",
+                            IsRead = true,
+                            JobPostingId = 1,
+                            ReadAt = new DateTime(2026, 1, 3, 4, 0, 0, 0, DateTimeKind.Local),
+                            ReceiverUserId = 2,
+                            SenderUserId = 3,
+                            SentAt = new DateTime(2026, 1, 3, 3, 0, 0, 0, DateTimeKind.Local)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Content = "Odlično! Kada možete doći?",
+                            IsRead = true,
+                            JobPostingId = 2,
+                            ReadAt = new DateTime(2026, 1, 3, 1, 0, 0, 0, DateTimeKind.Local),
+                            ReceiverUserId = 1,
+                            SenderUserId = 3,
+                            SentAt = new DateTime(2026, 1, 3, 0, 0, 0, 0, DateTimeKind.Local)
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Content = "Mogu sutra u 14h. Adresa je Trg Slobode 5, tačno?",
+                            IsRead = false,
+                            JobPostingId = 2,
+                            ReceiverUserId = 3,
+                            SenderUserId = 1,
+                            SentAt = new DateTime(2026, 1, 3, 2, 0, 0, 0, DateTimeKind.Local)
+                        });
                 });
 
             modelBuilder.Entity("QuickWork.Services.Database.Notification", b =>
@@ -561,6 +753,72 @@ namespace QuickWork.Services.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 1, 2, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsRead = true,
+                            Message = "Lepa Lukic se prijavila na vaš oglas 'Potreban babysitter za vikend'",
+                            ReadAt = new DateTime(2026, 1, 2, 1, 0, 0, 0, DateTimeKind.Local),
+                            RelatedEntityId = 1,
+                            RelatedEntityType = "JobApplication",
+                            Title = "Nova prijava na vaš oglas",
+                            Type = "NewApplication",
+                            UserId = 2
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2025, 12, 28, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsRead = true,
+                            Message = "Vaša prijava za posao 'Pomoć u selidbi' je prihvaćena!",
+                            ReadAt = new DateTime(2025, 12, 28, 2, 0, 0, 0, DateTimeKind.Local),
+                            RelatedEntityId = 4,
+                            RelatedEntityType = "JobApplication",
+                            Title = "Vaša prijava je prihvaćena",
+                            Type = "ApplicationAccepted",
+                            UserId = 3
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2026, 1, 3, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsRead = true,
+                            Message = "Primili ste novu poruku od Lepa Lukic",
+                            ReadAt = new DateTime(2026, 1, 3, 1, 0, 0, 0, DateTimeKind.Local),
+                            RelatedEntityId = 3,
+                            RelatedEntityType = "Message",
+                            Title = "Nova poruka",
+                            Type = "MessageReceived",
+                            UserId = 1
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CreatedAt = new DateTime(2025, 12, 29, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsRead = true,
+                            Message = "Primili ste plaćanje od 80.00 KM za posao 'Pomoć u selidbi'",
+                            ReadAt = new DateTime(2025, 12, 29, 0, 30, 0, 0, DateTimeKind.Local),
+                            RelatedEntityId = 1,
+                            RelatedEntityType = "Payment",
+                            Title = "Plaćanje primljeno",
+                            Type = "PaymentReceived",
+                            UserId = 3
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CreatedAt = new DateTime(2026, 1, 3, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsRead = false,
+                            Message = "Goran Skondric se prijavio na vaš oglas 'Fotograf za rođendan'",
+                            RelatedEntityId = 3,
+                            RelatedEntityType = "JobApplication",
+                            Title = "Nova prijava na vaš oglas",
+                            Type = "NewApplication",
+                            UserId = 2
+                        });
                 });
 
             modelBuilder.Entity("QuickWork.Services.Database.Payment", b =>
@@ -621,6 +879,32 @@ namespace QuickWork.Services.Migrations
                         .IsUnique();
 
                     b.ToTable("Payments");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Amount = 80.00m,
+                            CompletedAt = new DateTime(2025, 12, 29, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2025, 12, 28, 0, 0, 0, 0, DateTimeKind.Local),
+                            JobPostingId = 4,
+                            PayerUserId = 2,
+                            ReceiverUserId = 3,
+                            Status = "Completed",
+                            StripeChargeId = "ch_test_1234567890abcdef",
+                            StripePaymentIntentId = "pi_test_1234567890abcdef"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Amount = 30.00m,
+                            CreatedAt = new DateTime(2026, 1, 3, 0, 0, 0, 0, DateTimeKind.Local),
+                            JobPostingId = 2,
+                            PayerUserId = 3,
+                            ReceiverUserId = 1,
+                            Status = "Pending",
+                            StripePaymentIntentId = "pi_test_abcdef1234567890"
+                        });
                 });
 
             modelBuilder.Entity("QuickWork.Services.Database.Review", b =>
@@ -665,6 +949,30 @@ namespace QuickWork.Services.Migrations
                         .IsUnique();
 
                     b.ToTable("Reviews");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Comment = "Odličan rad! Lepa je bila veoma profesionalna i efikasna. Sve je završeno na vrijeme.",
+                            CreatedAt = new DateTime(2025, 12, 29, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsActive = true,
+                            JobPostingId = 4,
+                            Rating = 5,
+                            ReviewedUserId = 3,
+                            ReviewerUserId = 2
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Comment = "Odličan poslodavac, sve je bilo jasno dogovoreno. Preporučujem!",
+                            CreatedAt = new DateTime(2025, 12, 29, 0, 0, 0, 0, DateTimeKind.Local),
+                            IsActive = true,
+                            JobPostingId = 4,
+                            Rating = 5,
+                            ReviewedUserId = 2,
+                            ReviewerUserId = 3
+                        });
                 });
 
             modelBuilder.Entity("QuickWork.Services.Database.Role", b =>
