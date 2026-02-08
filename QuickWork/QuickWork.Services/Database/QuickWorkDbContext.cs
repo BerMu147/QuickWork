@@ -16,8 +16,6 @@ namespace QuickWork.Services.Database
         public DbSet<Gender> Genders { get; set; }
         public DbSet<City> Cities { get; set; }
         public DbSet<Category> Categories { get; set; }
-        
-        // New entities for Quick Work platform
         public DbSet<JobPosting> JobPostings { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
         public DbSet<Message> Messages { get; set; }
