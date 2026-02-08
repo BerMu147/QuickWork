@@ -63,10 +63,10 @@ namespace QuickWork.Subscriber.Services
                 {
                     using (var bus = RabbitHutch.CreateBus($"host={_host};virtualHost={_virtualhost};username={_username};password={_password}"))
                     {
-                        // Subscribe to vehicle notifications only
-                        bus.PubSub.Subscribe<VehicleNotification>("Vehicle_Notifications", HandleVehicleMessage);
+                        // Subscribe to job posting notifications
+                        bus.PubSub.Subscribe<JobPostingNotification>("JobPosting_Notifications", HandleJobPostingMessage);
 
-                        _logger.LogInformation("Waiting for vehicle notifications...");
+                        _logger.LogInformation("Waiting for job posting notifications...");
                         await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
                     }
                 }
