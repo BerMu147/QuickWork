@@ -19,6 +19,14 @@ builder.Services.AddTransient<IGenderService, GenderService>();
 builder.Services.AddTransient<ICityService, CityService>();
 builder.Services.AddTransient<ICategoryService, CategoryService>();
 
+// Quick Work platform services
+builder.Services.AddTransient<IJobPostingService, JobPostingService>();
+builder.Services.AddTransient<IJobApplicationService, JobApplicationService>();
+builder.Services.AddTransient<IMessageService, MessageService>();
+builder.Services.AddTransient<IReviewService, ReviewService>();
+builder.Services.AddTransient<IPaymentService, PaymentService>();
+builder.Services.AddTransient<INotificationService, NotificationService>();
+
 
 // Configure database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=.;Database=MoSmartParkDb;User Id=sa;Password=QWEasd123!;TrustServerCertificate=True;Trusted_Connection=True;";
