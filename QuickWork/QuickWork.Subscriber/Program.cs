@@ -1,5 +1,5 @@
-using ManiFest.Subscriber.Interfaces;
-using ManiFest.Subscriber.Services;
+using QuickWork.Subscriber.Interfaces;
+using QuickWork.Subscriber.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
