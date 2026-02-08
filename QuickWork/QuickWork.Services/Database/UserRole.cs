@@ -1,9 +1,9 @@
-using ManiFest.Services.Database;
+using QuickWork.Services.Database;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ManiFest.Services.Database
+namespace QuickWork.Services.Database
 {
     public class UserRole
     {

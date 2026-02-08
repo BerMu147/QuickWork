@@ -1,6 +1,6 @@
 using System;
 
-namespace ManiFest.Model
+namespace QuickWork.Model
 {
     public class UserException : Exception
     {

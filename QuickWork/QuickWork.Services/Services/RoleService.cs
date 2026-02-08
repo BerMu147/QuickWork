@@ -1,19 +1,19 @@
-using ManiFest.Model.Requests;
-using ManiFest.Model.Responses;
-using ManiFest.Model.SearchObjects;
-using ManiFest.Services.Database;
-using ManiFest.Services.Interfaces;
+using QuickWork.Model.Requests;
+using QuickWork.Model.Responses;
+using QuickWork.Model.SearchObjects;
+using QuickWork.Services.Database;
+using QuickWork.Services.Interfaces;
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ManiFest.Services.Services
+namespace QuickWork.Services.Services
 {
     public class RoleService : BaseCRUDService<RoleResponse, RoleSearchObject,Role, RoleUpsertRequest, RoleUpsertRequest>, IRoleService
     {
-        public RoleService(ManiFestDbContext context, IMapper mapper) : base(context, mapper)
+        public RoleService(QuickWorkDbContext context, IMapper mapper) : base(context, mapper)
         {
         }
 

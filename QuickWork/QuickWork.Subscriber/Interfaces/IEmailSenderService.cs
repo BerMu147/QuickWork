@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace ManiFest.Subscriber.Interfaces
+namespace QuickWork.Subscriber.Interfaces
 {
     public interface IEmailSenderService
     {

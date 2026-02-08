@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ManiFest.Services.Database
+namespace QuickWork.Services.Database
 {
     public class Category
     {

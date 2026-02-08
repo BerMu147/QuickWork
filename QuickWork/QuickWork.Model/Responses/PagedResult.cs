@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ManiFest.Model.Responses
+namespace QuickWork.Model.Responses
 {
     public class PagedResult<T>
     {

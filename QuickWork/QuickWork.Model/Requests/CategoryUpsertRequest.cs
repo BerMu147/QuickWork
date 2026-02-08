@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ManiFest.Model.Requests
+namespace QuickWork.Model.Requests
 {
     public class CategoryUpsertRequest
     {

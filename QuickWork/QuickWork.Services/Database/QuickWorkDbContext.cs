@@ -1,10 +1,12 @@
+using QuickWork.Services.Database;
 using Microsoft.EntityFrameworkCore;
+using QuickWork.Services.Database;
 
-namespace ManiFest.Services.Database
+namespace QuickWork.Services.Database
 {
-    public class ManiFestDbContext : DbContext
+    public class QuickWorkDbContext : DbContext
     {
-        public ManiFestDbContext(DbContextOptions<ManiFestDbContext> options) : base(options)
+        public QuickWorkDbContext(DbContextOptions<QuickWorkDbContext> options) : base(options)
         {
         }
 

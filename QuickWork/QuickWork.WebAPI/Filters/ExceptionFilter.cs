@@ -1,6 +1,6 @@
-using ManiFest.Model;
-using ManiFest.Model.Requests;
-using ManiFest.Services;
+using QuickWork.Model;
+using QuickWork.Model.Requests;
+using QuickWork.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -12,7 +12,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 
-namespace ManiFest.WebAPI.Filters
+namespace QuickWork.WebAPI.Filters
 {
     public class ExceptionFilter : ExceptionFilterAttribute
     {

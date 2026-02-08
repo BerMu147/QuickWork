@@ -1,4 +1,4 @@
-namespace ManiFest.Model.SearchObjects
+namespace QuickWork.Model.SearchObjects
 {
     public class CategorySearchObject : BaseSearchObject
     {

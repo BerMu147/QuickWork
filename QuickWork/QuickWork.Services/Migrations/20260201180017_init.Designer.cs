@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ManiFest.Services.Migrations
 {
-    [DbContext(typeof(ManiFestDbContext))]
+    [DbContext(typeof(QuickWorkDbContext))]
     [Migration("20260201180017_init")]
     partial class init
     {

@@ -1,9 +1,9 @@
 using eRent.Services.Helpers;
-using ManiFest.Services.Helpers;
+using QuickWork.Services.Helpers;
 using Microsoft.EntityFrameworkCore;
 using System;
 
-namespace ManiFest.Services.Database
+namespace QuickWork.Services.Database
 {
     public static class DataSeeder
     {

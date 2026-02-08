@@ -1,6 +1,6 @@
 using System;
 
-namespace ManiFest.Services.Database
+namespace QuickWork.Services.Database
 {
     public class City
     {

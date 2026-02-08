@@ -1,17 +1,17 @@
-using ManiFest.Services.Database;
+using QuickWork.Services.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
 using System.Security.Cryptography;
-using ManiFest.Model.Responses;
-using ManiFest.Model.SearchObjects;
-using ManiFest.Model.Requests;
-using ManiFest.Services.Interfaces;
+using QuickWork.Model.Responses;
+using QuickWork.Model.SearchObjects;
+using QuickWork.Model.Requests;
+using QuickWork.Services.Interfaces;
 using MapsterMapper;
 
-namespace ManiFest.Services.Services
+namespace QuickWork.Services.Services
 {
     public class UserService : BaseService<UserResponse, UserSearchObject, User>, IUserService
     {
@@ -19,7 +19,7 @@ namespace ManiFest.Services.Services
         private const int KeySize = 32;
         private const int Iterations = 10000;
 
-        public UserService(ManiFestDbContext context, IMapper mapper) : base(context, mapper)
+        public UserService(QuickWorkDbContext context, IMapper mapper) : base(context, mapper)
         {
         }
 

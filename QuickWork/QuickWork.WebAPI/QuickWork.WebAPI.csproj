@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ManiFest.Model\ManiFest.Model.csproj" />
-    <ProjectReference Include="..\ManiFest.Services\ManiFest.Services.csproj" />
+    <ProjectReference Include="..\QuickWork.Model\QuickWork.Model.csproj" />
+    <ProjectReference Include="..\QuickWork.Services\QuickWork.Services.csproj" />
   </ItemGroup>
 
 </Project>

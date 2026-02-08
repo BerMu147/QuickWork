@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ManiFest.Model\ManiFest.Model.csproj" />
-    <ProjectReference Include="..\ManiFest.Subscriber\ManiFest.Subscriber.csproj" />
+    <ProjectReference Include="..\QuickWork.Model\QuickWork.Model.csproj" />
+    <ProjectReference Include="..\QuickWork.Subscriber\QuickWork.Subscriber.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ManiFest.Services.Helpers
+namespace QuickWork.Services.Helpers
 {
     public class ImageConversion
     {

@@ -1,23 +1,23 @@
-using ManiFest.Services.Database;
+using QuickWork.Services.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ManiFest.Model.Responses;
-using ManiFest.Model.Requests;
-using ManiFest.Model.SearchObjects;
+using QuickWork.Model.Responses;
+using QuickWork.Model.Requests;
+using QuickWork.Model.SearchObjects;
 using System.Linq;
 using System;
 using MapsterMapper;
-using ManiFest.Services.Interfaces;
+using QuickWork.Services.Interfaces;
 
-namespace ManiFest.Services.Services
+namespace QuickWork.Services.Services
 {
     public abstract class BaseService<T, TSearch, TEntity> : IService<T, TSearch> where T : class where TSearch : BaseSearchObject where TEntity : class
     {
-        protected readonly ManiFestDbContext _context;
+        protected readonly QuickWorkDbContext _context;
         protected readonly IMapper _mapper;
 
-        public BaseService(ManiFestDbContext context, IMapper mapper)
+        public BaseService(QuickWorkDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;

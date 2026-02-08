@@ -6,12 +6,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Runtime.Versioning;
 using System.Linq;
-using ManiFest.Subscriber.Models;
-using ManiFest.Subscriber.Interfaces;
+using QuickWork.Subscriber.Models;
+using QuickWork.Subscriber.Interfaces;
 using System.Net.Sockets;
 using System.Net;
 
-namespace ManiFest.Subscriber.Services
+namespace QuickWork.Subscriber.Services
 {
     public class BackgroundWorkerService : BackgroundService
     {

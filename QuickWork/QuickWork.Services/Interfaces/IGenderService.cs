@@ -1,8 +1,8 @@
-using ManiFest.Model.Requests;
-using ManiFest.Model.Responses;
-using ManiFest.Model.SearchObjects;
+using QuickWork.Model.Requests;
+using QuickWork.Model.Responses;
+using QuickWork.Model.SearchObjects;
 
-namespace ManiFest.Services.Interfaces
+namespace QuickWork.Services.Interfaces
 {
     public interface IGenderService : ICRUDService<GenderResponse, GenderSearchObject, GenderUpsertRequest, GenderUpsertRequest>
     {

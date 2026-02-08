@@ -1,6 +1,6 @@
 using System;
 
-namespace ManiFest.Subscriber.Models
+namespace QuickWork.Subscriber.Models
 {
     public class VehicleNotification
     {

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ManiFest.Subscriber.Models
+namespace QuickWork.Subscriber.Models
 {
     public class VehicleNotificationDto
     {

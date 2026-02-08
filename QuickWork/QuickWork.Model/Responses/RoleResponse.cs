@@ -1,4 +1,4 @@
-namespace ManiFest.Model.Responses
+namespace QuickWork.Model.Responses
 {
     public class RoleResponse
     {

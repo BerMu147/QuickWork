@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Mail;
-using ManiFest.Subscriber.Interfaces;
+using QuickWork.Subscriber.Interfaces;
 
-namespace ManiFest.Subscriber.Services
+namespace QuickWork.Subscriber.Services
 {
     public class EmailSenderService : IEmailSenderService
     {

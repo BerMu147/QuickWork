@@ -5,10 +5,10 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using ManiFest.Services.Interfaces;
-using ManiFest.Services.Services;
-using ManiFest.Services.Database;
-using ManiFest.WebAPI.Filters;
+using QuickWork.Services.Interfaces;
+using QuickWork.Services.Services;
+using QuickWork.Services.Database;
+using QuickWork.WebAPI.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,18 +83,18 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dataContext = scope.ServiceProvider.GetRequiredService<ManiFestDbContext>();
+    //var dataContext = scope.ServiceProvider.GetRequiredService<ManiFestDbContext>();
 
 
-    var pendingMigrations = dataContext.Database.GetPendingMigrations().Any();
+    //var pendingMigrations = dataContext.Database.GetPendingMigrations().Any();
 
-    if (pendingMigrations)
-    {
+    //if (pendingMigrations)
+    //{
 
-        dataContext.Database.Migrate();
+    //    dataContext.Database.Migrate();
 
 
-    }
+    //}
     
 
 

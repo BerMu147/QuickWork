@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ManiFest.Services.Database
+namespace QuickWork.Services.Database
 {
     /// <summary>
     /// Dynamic seeder koji se pokreće u runtime-u,

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ManiFest.Model.SearchObjects
+namespace QuickWork.Model.SearchObjects
 {
     public class BaseSearchObject
     {

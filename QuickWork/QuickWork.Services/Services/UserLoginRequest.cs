@@ -1,4 +1,4 @@
-namespace ManiFest.Services.Services
+namespace QuickWork.Services.Services
 {
     public class UserLoginRequest
     {

@@ -1,12 +1,12 @@
-using ManiFest.Services.Database;
+using QuickWork.Services.Database;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ManiFest.Model.Responses;
-using ManiFest.Model.Requests;
-using ManiFest.Model.SearchObjects;
-using ManiFest.Services.Services;
+using QuickWork.Model.Responses;
+using QuickWork.Model.Requests;
+using QuickWork.Model.SearchObjects;
+using QuickWork.Services.Services;
 
-namespace ManiFest.Services.Interfaces
+namespace QuickWork.Services.Interfaces
 {
     public interface IUserService : IService<UserResponse, UserSearchObject>
     {

@@ -1,6 +1,6 @@
-using ManiFest.Model.Requests;
-using ManiFest.Services.Interfaces;
-using ManiFest.Services.Services;
+using QuickWork.Model.Requests;
+using QuickWork.Services.Interfaces;
+using QuickWork.Services.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -9,7 +9,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 
-namespace ManiFest.WebAPI.Filters
+namespace QuickWork.WebAPI.Filters
 {
     public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {

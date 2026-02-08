@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ManiFest.Services.Migrations
 {
-    [DbContext(typeof(ManiFestDbContext))]
+    [DbContext(typeof(QuickWorkDbContext))]
     partial class ManiFestDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

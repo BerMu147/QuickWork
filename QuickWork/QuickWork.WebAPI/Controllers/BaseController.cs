@@ -1,13 +1,13 @@
-using ManiFest.Model;
-using ManiFest.Model.SearchObjects;
-using ManiFest.Model.Responses;
+using QuickWork.Model;
+using QuickWork.Model.SearchObjects;
+using QuickWork.Model.Responses;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using ManiFest.Services.Interfaces;
+using QuickWork.Services.Interfaces;
 
-namespace ManiFest.WebAPI.Controllers
+namespace QuickWork.WebAPI.Controllers
 {
     [ApiController]
     [Route("[controller]")]
