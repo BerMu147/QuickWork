@@ -81,21 +81,23 @@ namespace QuickWork.Subscriber.Services
             }
         }
 
-        private async Task HandleVehicleMessage(VehicleNotification notification)
+        private async Task HandleJobPostingMessage(JobPostingNotification notification)
         {
-            var vehicle = notification.Vehicle;
+            var jobPosting = notification.JobPosting;
 
-            if (!vehicle.AdminEmails.Any())
+            if (!jobPosting.AdminEmails.Any())
             {
                 _logger.LogWarning("No admin emails provided in the notification");
                 return;
             }
 
-            var subject = "New Vehicle Pending Review";
-            var message = $"A new vehicle {vehicle.BrandName} {vehicle.Name} is ready to be accepted or rejected.\n" +
+            var subject = "New Job Posting Pending Review";
+            var message = $"A new job posting '{jobPosting.Title}' in category '{jobPosting.CategoryName}' has been created.\n" +
+                        $"Location: {jobPosting.CityName}\n" +
+                        $"Posted by: {jobPosting.PostedByUserName}\n" +
                         $"Please review and take appropriate action.";
 
-            foreach (var email in vehicle.AdminEmails)
+            foreach (var email in jobPosting.AdminEmails)
             {
                 try
                 {
