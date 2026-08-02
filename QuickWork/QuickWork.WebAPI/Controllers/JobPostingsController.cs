@@ -2,8 +2,10 @@ using QuickWork.Model.Requests;
 using QuickWork.Model.Responses;
 using QuickWork.Model.SearchObjects;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using QuickWork.Services.Interfaces;
+using QuickWork.Services.Services;
 
 namespace QuickWork.WebAPI.Controllers
 {
@@ -12,10 +14,12 @@ namespace QuickWork.WebAPI.Controllers
     public class JobPostingsController : ControllerBase
     {
         private readonly IJobPostingService _jobPostingService;
+        private readonly JobRecommendationService _recommendationService;
 
-        public JobPostingsController(IJobPostingService jobPostingService)
+        public JobPostingsController(IJobPostingService jobPostingService, JobRecommendationService recommendationService)
         {
             _jobPostingService = jobPostingService;
+            _recommendationService = recommendationService;
         }
 
         [HttpGet]
@@ -23,6 +27,14 @@ namespace QuickWork.WebAPI.Controllers
         {
             return await _jobPostingService.GetAsync(search ?? new JobPostingSearchObject());
         }
+
+        [HttpGet("recommended")]
+        public async Task<ActionResult<List<JobPostingResponse>>> GetRecommended([FromQuery] int userId, [FromQuery] int? count = null)
+        {
+            var recommended = await _recommendationService.GetRecommendedAsync(userId, count ?? 10);
+            return Ok(recommended);
+        }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<JobPostingResponse>> GetById(int id)

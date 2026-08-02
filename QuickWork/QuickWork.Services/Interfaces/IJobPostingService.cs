@@ -12,3 +12,4 @@ namespace QuickWork.Services.Interfaces
         Task<bool> DeleteAsync(int id);
     }
 }
+

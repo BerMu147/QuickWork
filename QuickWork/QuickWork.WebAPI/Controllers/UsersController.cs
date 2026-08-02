@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using QuickWork.Services.Interfaces;
 using QuickWork.Services.Services;
+using QuickWork.WebAPI.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace QuickWork.WebAPI.Controllers
 {
@@ -13,10 +15,12 @@ namespace QuickWork.WebAPI.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly JwtTokenHelper _jwtTokenHelper;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, JwtTokenHelper jwtTokenHelper)
         {
             _userService = userService;
+            _jwtTokenHelper = jwtTokenHelper;
         }
 
         [HttpGet]
@@ -37,6 +41,7 @@ namespace QuickWork.WebAPI.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<ActionResult<UserResponse>> Create(UserUpsertRequest request)
         {
             var createdUser = await _userService.CreateAsync(request);
@@ -66,12 +71,15 @@ namespace QuickWork.WebAPI.Controllers
         }
 
         [HttpPost("authenticate")]
-        public async Task<ActionResult<UserResponse>> Authenticate([FromBody] UserLoginRequest request)
+        [AllowAnonymous]
+        public async Task<ActionResult<LoginResponse>> Authenticate([FromBody] UserLoginRequest request)
         {
             var user = await _userService.AuthenticateAsync(request);
             if (user == null)
                 return Unauthorized();
-            return Ok(user);
+
+            var token = _jwtTokenHelper.GenerateToken(user);
+            return Ok(new LoginResponse { Token = token, User = user });
         }
     }
 }
