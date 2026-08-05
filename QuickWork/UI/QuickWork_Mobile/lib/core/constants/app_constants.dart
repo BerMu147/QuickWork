@@ -18,14 +18,15 @@ class AppConstants {
   // ---------------------------------------------------------------------------
   /// Base URL of the QuickWork backend.
   ///
-  /// The correct value depends on where the app runs:
-  /// - Physical Android device : use your computer's LAN IP (reachable from Wi-Fi)
-  /// - Android emulator         : http://10.0.2.2:7074
-  /// - Windows / Web            : http://localhost:7074
+  /// The backend serves HTTPS on this port with a self-signed development
+  /// certificate. The correct host depends on where the app runs:
+  /// - Physical Android device : use your computer's LAN IP (192.168.0.15)
+  /// - Android emulator         : https://10.0.2.2:7074
+  /// - Windows / Web            : https://localhost:7074
   ///
-  /// This is the developer's workstation LAN IP so the physical phone can
-  /// reach the backend over the local network.
-  static const String apiBaseUrl = 'http://192.168.0.15:7074';
+  /// NOTE: A `badCertificateCallback` is configured in `ApiClient` to accept
+  /// the self-signed dev cert. This must be removed for production.
+  static const String apiBaseUrl = 'https://192.168.0.15:7074';
 
   // ---------------------------------------------------------------------------
   // Auth / persistence keys
@@ -42,3 +43,4 @@ class AppConstants {
     vertical: 16.0,
   );
 }
+
