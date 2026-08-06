@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../core/theme/app_theme.dart';
 import '../features/auth/providers/auth_provider.dart';
+import '../features/home/screens/home_screen.dart';
 
 /// Root widget of the QuickWork mobile application.
 class QuickWorkApp extends StatelessWidget {
@@ -17,12 +19,9 @@ class QuickWorkApp extends StatelessWidget {
       title: 'QuickWork',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const Scaffold(
-        body: Center(
-          child: Text('QuickWork'),
+        // The home screen is reachable by everyone, logged in or not.
+        home: const HomeScreen(),
         ),
-      ),
-      ),
     );
   }
 }
