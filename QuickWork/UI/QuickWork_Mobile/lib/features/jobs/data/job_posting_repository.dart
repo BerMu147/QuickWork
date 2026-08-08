@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exceptions.dart';
+import '../models/job_application_model.dart';
+import '../models/job_application_request.dart';
 import '../models/job_posting_model.dart';
 
 /// Optional query filters for the job postings list.
@@ -69,4 +71,44 @@ class JobPostingRepository {
       throw ApiException.fromDioError(e);
     }
   }
+
+  /// Submits a job application on behalf of [applicantUserId].
+  Future<JobApplicationModel> applyToJob({
+    required int jobPostingId,
+    required int applicantUserId,
+    String? message,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post<Map<String, dynamic>>(
+        '/JobApplications',
+        queryParameters: {'applicantUserId': applicantUserId},
+        data: JobApplicationRequest(
+          jobPostingId: jobPostingId,
+          message: message,
+        ).toJson(),
+      );
+
+      return JobApplicationModel.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Returns the applications submitted by [applicantUserId].
+  Future<List<JobApplicationModel>> fetchApplicationsForUser(int applicantUserId) async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/JobApplications',
+        queryParameters: {'ApplicantUserId': applicantUserId},
+      );
+
+      final items = response.data?['items'] as List<dynamic>? ?? [];
+      return items
+          .map((e) => JobApplicationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
 }
+
