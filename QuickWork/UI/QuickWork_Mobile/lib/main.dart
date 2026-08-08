@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:quickwork_mobile/core/api/api_client.dart';
 import 'package:quickwork_mobile/features/auth/providers/auth_provider.dart';
+import 'package:quickwork_mobile/features/jobs/providers/job_posting_provider.dart';
 import 'package:quickwork_mobile/features/lookup/providers/lookup_provider.dart';
 
 import 'app/app.dart';
@@ -20,6 +21,7 @@ Future<void> main() async {
     QuickWorkApp(
       authProvider: authProvider,
       lookupProvider: LookupProvider(),
+      jobPostingProvider: JobPostingProvider(),
     ),
   );
 }

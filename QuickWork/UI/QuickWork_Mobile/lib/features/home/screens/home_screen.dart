@@ -3,12 +3,26 @@ import 'package:provider/provider.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/login_screen.dart';
+import '../../jobs/screens/jobs_screen.dart';
 
-/// Main screen of the app. Reachable by everyone — no login required.
+/// Main shell of the app. Reachable by everyone — no login required.
 ///
-/// Guests can browse content, but publishing/applying requires an account.
-class HomeScreen extends StatelessWidget {
+/// Guests can browse jobs freely, but publishing/applying requires an account.
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+
+  static const List<Widget> _tabs = [
+    JobsScreen(),
+    _PlaceholderTab(icon: Icons.list_alt_outlined, label: 'My Jobs'),
+    _PlaceholderTab(icon: Icons.person_outline, label: 'Profile'),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -84,8 +98,54 @@ class HomeScreen extends StatelessWidget {
             ),
         ],
       ),
-      body: const Center(
-        child: Text('Browse jobs coming soon'),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _tabs,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (i) => setState(() => _currentIndex = i),
+        selectedItemColor: const Color(0xFF129ACA),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.work_outline),
+            label: 'Jobs',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_alt_outlined),
+            label: 'My Jobs',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A simple placeholder tab used until its real content is built.
+class _PlaceholderTab extends StatelessWidget {
+  const _PlaceholderTab({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 56, color: Colors.grey[400]),
+          const SizedBox(height: 12),
+          Text(
+            '$label coming soon',
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+        ],
       ),
     );
   }
