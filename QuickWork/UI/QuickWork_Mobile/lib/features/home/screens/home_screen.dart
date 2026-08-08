@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../jobs/screens/jobs_screen.dart';
+import '../../jobs/screens/publish_job_screen.dart';
+
 
 /// Main shell of the app. Reachable by everyone — no login required.
 ///
@@ -119,9 +121,25 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             label: 'Profile',
-          ),
+                    ),
         ],
       ),
+      // A "+" button to publish a job, only shown to logged-in users on the
+      // Jobs tab. Publishing is account-gated (like checking out in a shop).
+      floatingActionButton:
+          auth.isAuthenticated && _currentIndex == 0
+              ? FloatingActionButton.extended(
+                  onPressed: () async {
+                    await Navigator.of(context).push<bool>(
+                      MaterialPageRoute(
+                        builder: (_) => const PublishJobScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Publish'),
+                )
+              : null,
     );
   }
 }

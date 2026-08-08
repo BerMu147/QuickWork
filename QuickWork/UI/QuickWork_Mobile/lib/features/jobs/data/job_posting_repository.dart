@@ -2,9 +2,11 @@ import 'package:dio/dio.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exceptions.dart';
+import '../models/category_model.dart';
 import '../models/job_application_model.dart';
 import '../models/job_application_request.dart';
 import '../models/job_posting_model.dart';
+import '../models/job_posting_upsert_request.dart';
 
 /// Optional query filters for the job postings list.
 class JobPostingQuery {
@@ -106,6 +108,43 @@ class JobPostingRepository {
       return items
           .map((e) => JobApplicationModel.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Returns the available job categories (requires authentication).
+  Future<List<CategoryModel>> fetchCategories() async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/Category',
+        queryParameters: const {'PageSize': 100, 'IncludeTotalCount': true},
+      );
+
+      final items = response.data?['items'] as List<dynamic>? ?? [];
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(CategoryModel.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Creates a new job posting on behalf of [postedByUserId]. Returns the
+  /// created posting.
+  Future<JobPostingModel> createJobPosting({
+    required JobPostingUpsertRequest request,
+    required int postedByUserId,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post<Map<String, dynamic>>(
+        '/JobPostings',
+        queryParameters: {'postedByUserId': postedByUserId},
+        data: request.toJson(),
+      );
+
+      return JobPostingModel.fromJson(response.data ?? {});
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

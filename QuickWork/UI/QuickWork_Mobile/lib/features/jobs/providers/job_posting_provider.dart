@@ -2,8 +2,10 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/api/api_exceptions.dart';
 import '../data/job_posting_repository.dart';
+import '../models/category_model.dart';
 import '../models/job_application_model.dart';
 import '../models/job_posting_model.dart';
+import '../models/job_posting_upsert_request.dart';
 
 /// Holds the list of job postings and manages their loading/application state.
 class JobPostingProvider extends ChangeNotifier {
@@ -14,17 +16,23 @@ class JobPostingProvider extends ChangeNotifier {
 
   List<JobPostingModel> _jobPostings = [];
   List<JobApplicationModel> _myApplications = [];
+  List<CategoryModel> _categories = [];
   bool _isLoading = false;
   bool _isApplying = false;
+  bool _isPublishing = false;
   String? _error;
   String? _applicationError;
+  String? _publishError;
 
   List<JobPostingModel> get jobPostings => _jobPostings;
   List<JobApplicationModel> get myApplications => _myApplications;
+  List<CategoryModel> get categories => _categories;
   bool get isLoading => _isLoading;
   bool get isApplying => _isApplying;
+  bool get isPublishing => _isPublishing;
   String? get error => _error;
   String? get applicationError => _applicationError;
+  String? get publishError => _publishError;
 
   /// Loads the job postings (optionally filtered). Returns true on success.
   Future<bool> loadJobPostings({JobPostingQuery? query}) async {
@@ -97,6 +105,48 @@ class JobPostingProvider extends ChangeNotifier {
       if (jp.id == id) return jp;
     }
     return null;
+  }
+
+  /// Loads the available job categories (requires authentication).
+  Future<List<CategoryModel>> loadCategories() async {
+    try {
+      _categories = await _repository.fetchCategories();
+      notifyListeners();
+    } on ApiException {
+      // Leave categories empty on failure.
+    }
+    return _categories;
+  }
+
+  /// Publishes a new job posting on behalf of [postedByUserId].
+  ///
+  /// Returns true on success, false on failure (error in [publishError]).
+  Future<bool> publishJob({
+    required JobPostingUpsertRequest request,
+    required int postedByUserId,
+  }) async {
+    _isPublishing = true;
+    _publishError = null;
+    notifyListeners();
+
+    try {
+      final created = await _repository.createJobPosting(
+        request: request,
+        postedByUserId: postedByUserId,
+      );
+      // Prepend to the front of the local list so it shows immediately.
+      _jobPostings = [created, ..._jobPostings];
+      return true;
+    } on ApiException catch (e) {
+      _publishError = e.message;
+      return false;
+    } catch (_) {
+      _publishError = 'Unable to publish the job. Please try again.';
+      return false;
+    } finally {
+      _isPublishing = false;
+      notifyListeners();
+    }
   }
 }
 
