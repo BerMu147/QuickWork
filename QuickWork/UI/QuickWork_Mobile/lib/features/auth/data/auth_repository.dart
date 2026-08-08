@@ -3,6 +3,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exceptions.dart';
 import '../models/login_request.dart';
 import '../models/login_response.dart';
+import '../models/register_request.dart';
 import '../models/user_model.dart';
 
 /// Handles authentication-related API calls against the backend.
@@ -40,9 +41,35 @@ class AuthRepository {
     }
   }
 
+  /// Registers a new user via `POST /Users`.
+  ///
+  /// Returns the newly created user, throws an [ApiException] on failure.
+  Future<UserModel> register(RegisterRequest request) async {
+    try {
+      final response = await _apiClient.dio.post<Map<String, dynamic>>(
+        '/Users',
+        data: request.toJson(),
+      );
+
+      final data = response.data;
+      if (data == null) {
+        throw const ApiException(message: 'Unexpected empty response from server.');
+      }
+
+      return UserModel.fromJson(data);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(message: 'Unable to register. $e');
+    }
+  }
+
   /// Returns the currently authenticated user from the token, or null.
   ///
   /// Since the backend does not expose a "me" endpoint for now, we return
   /// null here. Persisted user data is restored from local storage instead.
   Future<UserModel?> fetchCurrentUser() async => null;
 }
+

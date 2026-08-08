@@ -7,6 +7,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exceptions.dart';
 import '../../../core/constants/app_constants.dart';
 import '../data/auth_repository.dart';
+import '../models/register_request.dart';
 import '../models/user_model.dart';
 
 /// Holds authentication state for the whole app and exposes login/logout.
@@ -65,8 +66,54 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Registers a new user with the given details, then automatically logs
+  /// them in so they can start using the app right away.
+  ///
+  /// Returns `true` on success. On failure sets [error] and returns `false`.
+  Future<bool> register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String username,
+    required String password,
+    required int genderId,
+    required int cityId,
+    String? phoneNumber,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _repository.register(
+        RegisterRequest(
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          username: username,
+          password: password,
+          genderId: genderId,
+          cityId: cityId,
+          phoneNumber: phoneNumber,
+        ),
+      );
+
+      // Auto-login the freshly created account.
+      return await login(username: username, password: password);
+    } on ApiException catch (e) {
+      _error = e.message;
+      return false;
+    } catch (_) {
+      _error = 'An unexpected error occurred. Please try again.';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Logs the user out, clearing the in-memory and persisted session.
   Future<void> logout() async {
+
     _token = null;
     _user = null;
     ApiClient.instance.setAuthToken(null);

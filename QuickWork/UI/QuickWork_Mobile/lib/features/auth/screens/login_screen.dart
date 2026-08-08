@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../providers/auth_provider.dart';
+import 'registration_screen.dart';
 
 /// Authentication screen.
 ///
@@ -189,10 +190,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        // TODO(S4): navigate to the registration screen.
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Registration is coming soon.'),
+                        Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => const RegistrationScreen(),
                           ),
                         );
                       },
