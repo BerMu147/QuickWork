@@ -1,6 +1,8 @@
 using QuickWork.Model.Requests;
 using QuickWork.Model.Responses;
 using QuickWork.Model.SearchObjects;
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -23,12 +25,14 @@ namespace QuickWork.WebAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<PagedResult<JobPostingResponse>>> Get([FromQuery] JobPostingSearchObject? search = null)
         {
             return await _jobPostingService.GetAsync(search ?? new JobPostingSearchObject());
         }
 
         [HttpGet("recommended")]
+        [AllowAnonymous]
         public async Task<ActionResult<List<JobPostingResponse>>> GetRecommended([FromQuery] int userId, [FromQuery] int? count = null)
         {
             var recommended = await _recommendationService.GetRecommendedAsync(userId, count ?? 10);
@@ -37,6 +41,7 @@ namespace QuickWork.WebAPI.Controllers
 
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<JobPostingResponse>> GetById(int id)
         {
             var jobPosting = await _jobPostingService.GetByIdAsync(id);
@@ -77,3 +82,5 @@ namespace QuickWork.WebAPI.Controllers
         }
     }
 }
+
+
