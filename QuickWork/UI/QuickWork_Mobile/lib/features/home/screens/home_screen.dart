@@ -19,12 +19,56 @@ class HomeScreen extends StatelessWidget {
         title: const Text('QuickWork'),
         actions: [
           if (auth.isAuthenticated)
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Center(
-                child: Text(
+            PopupMenuButton<String>(
+              tooltip: 'Account',
+              offset: const Offset(0, 50),
+              onSelected: (value) async {
+                if (value == 'logout') {
+                  await context.read<AuthProvider>().logout();
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  enabled: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                   auth.user?.fullName ?? '',
-                  style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                      const SizedBox(height: 2),
+                      Text(
+                        auth.user?.email ?? '',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+              ),
+                      ),
+        ],
+      ),
+      ),
+                const PopupMenuDivider(),
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: ListTile(
+                    leading: Icon(Icons.logout, color: Colors.red),
+                    title: Text('Log out'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.account_circle, color: Colors.white),
+                    const SizedBox(width: 6),
+                    Text(
+                      auth.user?.fullName ?? '',
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                  ],
                 ),
               ),
             )
