@@ -15,9 +15,11 @@ class JobPostingProvider extends ChangeNotifier {
   final JobPostingRepository _repository;
 
   List<JobPostingModel> _jobPostings = [];
+  List<JobPostingModel> _myJobPostings = [];
   List<JobApplicationModel> _myApplications = [];
   List<CategoryModel> _categories = [];
   bool _isLoading = false;
+  bool _isLoadingMyJobs = false;
   bool _isApplying = false;
   bool _isPublishing = false;
   String? _error;
@@ -25,9 +27,11 @@ class JobPostingProvider extends ChangeNotifier {
   String? _publishError;
 
   List<JobPostingModel> get jobPostings => _jobPostings;
+  List<JobPostingModel> get myJobPostings => _myJobPostings;
   List<JobApplicationModel> get myApplications => _myApplications;
   List<CategoryModel> get categories => _categories;
   bool get isLoading => _isLoading;
+  bool get isLoadingMyJobs => _isLoadingMyJobs;
   bool get isApplying => _isApplying;
   bool get isPublishing => _isPublishing;
   String? get error => _error;
@@ -99,6 +103,32 @@ class JobPostingProvider extends ChangeNotifier {
       // Keep existing list; not critical.
     }
   }
+
+  /// Loads the jobs the user has published plus their applications.
+  ///
+  /// Used to populate the "My Jobs" tab.
+  Future<void> loadMyJobs(int userId) async {
+    _isLoadingMyJobs = true;
+    notifyListeners();
+
+    try {
+      final results = await Future.wait([
+        _repository.fetchJobsForUser(userId),
+        _repository.fetchApplicationsForUser(userId),
+      ]);
+      _myJobPostings = results[0] as List<JobPostingModel>;
+      _myApplications = results[1] as List<JobApplicationModel>;
+    } on ApiException {
+      // Leave as-is.
+    } finally {
+      _isLoadingMyJobs = false;
+      notifyListeners();
+    }
+  }
+
+  /// Returns the applications received for one of the user's own job postings.
+  Future<List<JobApplicationModel>> applicationsForJob(int jobPostingId) =>
+      _repository.fetchApplicationsForJob(jobPostingId);
 
   JobPostingModel? byId(int id) {
     for (final jp in _jobPostings) {

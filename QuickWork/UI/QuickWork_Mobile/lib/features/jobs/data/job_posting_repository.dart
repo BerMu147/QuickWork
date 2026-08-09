@@ -14,6 +14,7 @@ class JobPostingQuery {
     this.title,
     this.categoryId,
     this.cityId,
+    this.postedByUserId,
     this.status = 'Open',
     this.page,
     this.pageSize,
@@ -22,6 +23,7 @@ class JobPostingQuery {
   final String? title;
   final int? categoryId;
   final int? cityId;
+  final int? postedByUserId;
   final String? status;
   final int? page;
   final int? pageSize;
@@ -31,6 +33,7 @@ class JobPostingQuery {
       if (title != null && title!.isNotEmpty) 'Title': title,
       if (categoryId != null) 'CategoryId': categoryId,
       if (cityId != null) 'CityId': cityId,
+      if (postedByUserId != null) 'PostedByUserId': postedByUserId,
       if (status != null && status!.isNotEmpty) 'Status': status,
       if (page != null) 'Page': page,
       if (pageSize != null) 'PageSize': pageSize,
@@ -107,6 +110,44 @@ class JobPostingRepository {
       final items = response.data?['items'] as List<dynamic>? ?? [];
       return items
           .map((e) => JobApplicationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Returns the applications received for a specific [jobPostingId].
+  Future<List<JobApplicationModel>> fetchApplicationsForJob(
+      int jobPostingId) async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/JobApplications',
+        queryParameters: {'JobPostingId': jobPostingId},
+      );
+
+      final items = response.data?['items'] as List<dynamic>? ?? [];
+      return items
+          .map((e) => JobApplicationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Returns the job postings published by [userId].
+  ///
+  /// [fetchOwn] fetches the detail of a posted job; [withApplications] loads
+  /// the applications each job received (used for the "My Jobs" tab).
+  Future<List<JobPostingModel>> fetchJobsForUser(int userId) async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/JobPostings',
+        queryParameters: {'PostedByUserId': userId},
+      );
+
+      final items = response.data?['items'] as List<dynamic>? ?? [];
+      return items
+          .map((e) => JobPostingModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);

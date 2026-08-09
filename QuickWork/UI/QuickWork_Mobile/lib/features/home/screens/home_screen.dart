@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../jobs/screens/jobs_screen.dart';
+import '../../jobs/screens/my_jobs_screen.dart';
 import '../../jobs/screens/publish_job_screen.dart';
+
 
 
 /// Main shell of the app. Reachable by everyone — no login required.
@@ -20,9 +22,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  static const List<Widget> _tabs = [
+    static const List<Widget> _tabs = [
     JobsScreen(),
-    _PlaceholderTab(icon: Icons.list_alt_outlined, label: 'My Jobs'),
+    MyJobsScreen(),
     _PlaceholderTab(icon: Icons.person_outline, label: 'Profile'),
   ];
 
