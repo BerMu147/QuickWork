@@ -20,8 +20,8 @@ A live tracker of what's been built and what's next.
 | S6 | Job detail + Apply flow (login-gating) | ✅ Done | Application submission |
 | S7 | Publish Job form | ✅ Done | For logged-in users, "+" FAB |
 | S8 | "My Jobs" tab | ✅ Done | Published jobs + applications |
-| S9 | Profile tab | ⏳ Next | User info / edit |
-| Polish | Search & filters, welcome email, splash/logo, push notifications | 🔲 | Notifications/config pending |
+| S9 | Profile tab | ✅ Done | User info + edit |
+| Polish | Search & filters, welcome email, splash/logo, push notifications | ⏳ Next | Notifications/config pending |
 
 ---
 
@@ -79,6 +79,15 @@ A live tracker of what's been built and what's next.
 - Provider: added `myJobPostings`, `isLoadingMyJobs`, `loadMyJobs()` (loads posts + applications in parallel).
 - Integration test: logged-in user can fetch their posted jobs & applications, verified against live backend.
 
+### ✅ S9 — Profile Tab
+- Replaced the "Profile" placeholder with a real tab showing the logged-in user's **avatar (initials), full name, username, email, phone, city, gender**.
+- **Login-gated**: guests are prompted to log in (matches My Jobs).
+- **Edit profile** form: first/last name, email, phone, gender, city.
+- Added `UserRepository` (`PUT /Users/{id}`, `GET /Users/{id}`) and `UserUpdateRequest`.
+- `AuthProvider.updateUser()` refreshes the in-memory + persisted user after editing.
+- All three bottom tabs are now fully implemented.
+- Integration test: logged-in user can update their profile, verified against live backend (with safe round-trip restore).
+
 ---
 
 ## Design Decisions
@@ -92,7 +101,7 @@ A live tracker of what's been built and what's next.
 ## Testing Notes
 - `flutter analyze` — no issues.
 - Offline widget tests pass.
-- Live-backend integration tests pass (login, registration, job posting/lookup, job application, job publish, my-jobs).
+- Live-backend integration tests pass (login, registration, job posting/lookup, job application, job publish, my-jobs, profile update).
 - Backend integration tests require the backend to be running.
 
 ---
