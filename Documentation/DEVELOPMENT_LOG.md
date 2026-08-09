@@ -17,9 +17,9 @@ A live tracker of what's been built and what's next.
 | S3 | Login screen | ✅ Done | Optional login, guest entry, register link |
 | S4 | Registration screen | ✅ Done | Gender/City lookups, auto-login |
 | S5 | Job listings + navigation shell | ✅ Done | Bottom nav, guest browsing |
-| S6 | Job detail + Apply flow (login-gating) | ⏳ Next | Application submission |
-| S7 | Publish Job form | 🔲 | For logged-in users |
-| S8 | "My Jobs" tab | 🔲 | Jobs I posted + applications |
+| S6 | Job detail + Apply flow (login-gating) | ✅ Done | Application submission |
+| S7 | Publish Job form | ✅ Done | For logged-in users, "+" FAB |
+| S8 | "My Jobs" tab | ⏳ Next | Jobs I posted + applications |
 | S9 | Profile tab | 🔲 | User info / edit |
 | Polish | Search & filters, welcome email, splash/logo, push notifications | 🔲 | Notifications/config pending |
 
@@ -55,6 +55,22 @@ A live tracker of what's been built and what's next.
 - Bottom navigation shell: **Jobs / My Jobs / Profile**.
 - **Guest browsing enabled**: added `[AllowAnonymous]` to backend `Get`, `GetRecommended`, `GetById` in `JobPostingsController.cs`.
 
+### ✅ S6 — Job Detail + Apply Flow (Login-gating)
+- Full job detail view (description, schedule, duration, payment).
+- **Apply button** with **login-gating**: guests tapping Apply are prompted to log in first; logged-in users apply directly.
+- `POST /JobApplications` submission via repository/provider.
+- Success feedback + "Applied" state; application error display.
+- "Log in to apply" vs "Apply for this job" contextual button label.
+- Integration test: logged-in user can apply, verified against live backend.
+
+### ✅ S7 — Publish Job Form
+- Full publish form: title, description, category, city, address, payment, duration, scheduled date, start/end time.
+- **Category lookup** added (15 categories; endpoint requires auth — fits account-gated publishing).
+- **"+" Publish FAB** on the Jobs tab, shown only to **logged-in users**.
+- `POST /JobPostings` via repository/provider; new job appears at the top of the feed.
+- Added `intl` dependency for date/time formatting.
+- Integration test: logged-in user can publish, verified against live backend.
+
 ---
 
 ## Design Decisions
@@ -68,7 +84,7 @@ A live tracker of what's been built and what's next.
 ## Testing Notes
 - `flutter analyze` — no issues.
 - Offline widget tests pass.
-- Live-backend integration tests pass (login, registration, job posting fetch).
+- Live-backend integration tests pass (login, registration, job posting fetch, job application, job publish).
 - Backend integration tests require the backend to be running.
 
 ---
@@ -78,3 +94,4 @@ A live tracker of what's been built and what's next.
 - **Splash / logo screen** to be built by the user (app opens straight to home currently).
 - Remove self-signed cert handling before production.
 - Job descriptions may have diacritics/encoding quirks in existing seed data.
+
