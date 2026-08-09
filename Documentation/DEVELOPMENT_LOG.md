@@ -130,3 +130,8 @@ A live tracker of what's been built and what's next.
 - Possible future measures: verified profiles, phone verification on registration, enforce a valid contact method, moderation.
 - *(Note taken — open design question; not part of the core sub-steps.)*
 
+### User Profile Additional Features
+- User can add custom skills so the publisher knows if it's related to something specific
+- User can add previous work experiences. Nothing too descriptive, just the indication of experience
+- User can leave the impression after finished job with publisher (worker<=>publisher) can be positive/negative/neutral
+- On User profile overview there should be a count of total completed jobs (will be relevant for additional features)
