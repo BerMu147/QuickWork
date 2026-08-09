@@ -19,8 +19,8 @@ A live tracker of what's been built and what's next.
 | S5 | Job listings + navigation shell | ✅ Done | Bottom nav, guest browsing |
 | S6 | Job detail + Apply flow (login-gating) | ✅ Done | Application submission |
 | S7 | Publish Job form | ✅ Done | For logged-in users, "+" FAB |
-| S8 | "My Jobs" tab | ⏳ Next | Jobs I posted + applications |
-| S9 | Profile tab | 🔲 | User info / edit |
+| S8 | "My Jobs" tab | ✅ Done | Published jobs + applications |
+| S9 | Profile tab | ⏳ Next | User info / edit |
 | Polish | Search & filters, welcome email, splash/logo, push notifications | 🔲 | Notifications/config pending |
 
 ---
@@ -71,6 +71,14 @@ A live tracker of what's been built and what's next.
 - Added `intl` dependency for date/time formatting.
 - Integration test: logged-in user can publish, verified against live backend.
 
+### ✅ S8 — "My Jobs" Tab
+- Replaced the "My Jobs" placeholder with a real tab showing the **published jobs** and **my applications**.
+- Two sub-tabs: **Published** (jobs I posted, with status) and **Applications** (jobs I applied to, application status).
+- **Login-gated**: a guest opening the tab is prompted to log in.
+- Repository: added `postedByUserId` filter, `fetchJobsForUser()` and `fetchApplicationsForJob()`.
+- Provider: added `myJobPostings`, `isLoadingMyJobs`, `loadMyJobs()` (loads posts + applications in parallel).
+- Integration test: logged-in user can fetch their posted jobs & applications, verified against live backend.
+
 ---
 
 ## Design Decisions
@@ -84,7 +92,7 @@ A live tracker of what's been built and what's next.
 ## Testing Notes
 - `flutter analyze` — no issues.
 - Offline widget tests pass.
-- Live-backend integration tests pass (login, registration, job posting fetch, job application, job publish).
+- Live-backend integration tests pass (login, registration, job posting/lookup, job application, job publish, my-jobs).
 - Backend integration tests require the backend to be running.
 
 ---
