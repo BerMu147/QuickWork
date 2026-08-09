@@ -3,11 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/login_screen.dart';
+import '../../auth/screens/profile_screen.dart';
 import '../../jobs/screens/jobs_screen.dart';
 import '../../jobs/screens/my_jobs_screen.dart';
 import '../../jobs/screens/publish_job_screen.dart';
-
-
 
 /// Main shell of the app. Reachable by everyone — no login required.
 ///
@@ -22,10 +21,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-    static const List<Widget> _tabs = [
+  static const List<Widget> _tabs = [
     JobsScreen(),
     MyJobsScreen(),
-    _PlaceholderTab(icon: Icons.person_outline, label: 'Profile'),
+    ProfileScreen(),
   ];
 
   @override
@@ -141,33 +140,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: const Icon(Icons.add),
                   label: const Text('Publish'),
                 )
-              : null,
+                            : null,
     );
   }
 }
 
-/// A simple placeholder tab used until its real content is built.
-class _PlaceholderTab extends StatelessWidget {
-  const _PlaceholderTab({required this.icon, required this.label});
 
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 56, color: Colors.grey[400]),
-          const SizedBox(height: 12),
-          Text(
-            '$label coming soon',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-        ],
-      ),
-    );
-  }
-}
 

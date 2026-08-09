@@ -123,6 +123,13 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Updates the in-memory + persisted user after a successful profile edit.
+  Future<void> updateUser(UserModel user) async {
+    _user = user;
+    await _persistSession();
+    notifyListeners();
+  }
+
   /// Restores a previously persisted session (if any) at app start-up.
   Future<void> restoreSession() async {
     final prefs = await SharedPreferences.getInstance();
