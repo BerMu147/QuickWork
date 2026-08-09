@@ -103,3 +103,21 @@ A live tracker of what's been built and what's next.
 - Remove self-signed cert handling before production.
 - Job descriptions may have diacritics/encoding quirks in existing seed data.
 
+---
+
+## Open Notes (Validated During Testing — For Polish Phase)
+
+### Application status lifecycle (publisher side)
+- Backend status values: **Pending, Accepted, Rejected, Withdrawn** (it's *Rejected*, not "Denied"). UI color-codes each.
+- **Not yet clear how the publisher updates a candidate's status** (accept/reject) from within the app. Needs a publisher-side "review applications" UI + `PUT /JobApplications/{id}` update flow. *(Note taken — to implement in polish.)*
+
+### Contact / communication flow
+- After an application is **accepted**, the Publisher and Worker need to get in touch.
+- **Open options to decide:** private contact via **phone number** and/or an **in-app messaging** system (`MessagesController` exists on the backend).
+- *(Note taken — to decide & implement in polish.)*
+
+### Trust / anti-scam measures
+- **How to verify a user/publisher is real?** (e.g. could prevent unreasonable/fake job postings.)
+- Possible future measures: verified profiles, phone verification on registration, enforce a valid contact method, moderation.
+- *(Note taken — open design question; not part of the core sub-steps.)*
+
