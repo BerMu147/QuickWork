@@ -6,6 +6,7 @@ import '../features/auth/providers/auth_provider.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/jobs/providers/job_posting_provider.dart';
 import '../features/lookup/providers/lookup_provider.dart';
+import '../features/splash/screens/splash_screen.dart';
 
 /// Root widget of the QuickWork mobile application.
 class QuickWorkApp extends StatelessWidget {
@@ -29,12 +30,15 @@ class QuickWorkApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: jobPostingProvider),
       ],
       child: MaterialApp(
-      title: 'QuickWork',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-        // The home screen is reachable by everyone, logged in or not.
-        home: const HomeScreen(),
-        ),
+        title: 'QuickWork',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        // First-launch intro (logo + video), then the home screen.
+        home: const SplashScreen(),
+        routes: {
+          '/home': (context) => const HomeScreen(),
+        },
+      ),
     );
   }
 }
