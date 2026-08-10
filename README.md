@@ -1,172 +1,127 @@
 # QuickWork
 
-A comprehensive property rental management system built with .NET Core backend and Flutter frontend applications.
+A job-posting mobile application that connects people who need work done with people looking for work. Built with an ASP.NET Core Web API backend and a Flutter frontend.
 
 ## 📱 Applications
 
-QuickWork system consists of three Flutter applications:
+QuickWork consists of the following applications:
 
-1. **Desktop Admin App** (`QuickWork_Admin`) - Administrative interface for system management
-2. **Landlord Desktop App** (`QuickWork_Desktop`) - Property management interface
-3. **Mobile App** (QuickWork_Mobile`) - Mobile application for regular users to browse and post jobs
+1. **Mobile App** (`QuickWork_Mobile`) - The primary app for browsing, posting, and applying to jobs on the go.
+2. **WebAPI Backend** (`QuickWork.WebAPI`) - RESTful API that powers the mobile app.
+3. **Email Subscriber** (`QuickWork.Subscriber`) - Background service that sends transactional emails.
 
 ## 🔐 Test Login Credentials
 
-### Desktop Admin App
-- **Username:** `admin` (pre-filled)
-- **Password:** `qwerty` (pre-filled)
-
-### Landlord Desktop App
-- **Username:** `berinm` (pre-filled)
-- **Password:** `test` (pre-filled)
-
 ### Mobile App
-- **Username:** `berinm` (pre-filled)
-- **Password:** `test` (pre-filled)
+- **Username:** `berinm`
+- **Password:** `test`
 
-> **Note:** All login forms come with pre-filled test credentials for easy testing.
+> **Note:** Users can **browse jobs as a guest** (no login required). Logging in unlocks publishing, applying, "My Jobs", and the profile.
 
 ## 📧 Email Notifications
 
-### Landlord Notification Email
-The system uses the following email account for sending notifications to landlords:
+### Welcome Email
+The system sends a welcome email when a new user registers.
 
-- **Email:** ``
-- **Password:** ``
+- **Target:** `quickworkberinm@gmail.com`
 
-This email account is configured for the landlord user (User ID: 2) and receives email notifications for various rent-related events.
+> This is currently a notification hook and will be expanded automatically as the application grows (e.g. application status updates).
 
-### When Notifications Are Sent
-
-Email notifications are automatically sent in the following scenarios:
-
-1. **Pending** - When a user creates a new rent request
-   - **Recipient:** Landlord
-   - **Subject:** "New Rent Request - [Property Title]"
-
-2. **Cancelled** - When a user cancels a rent request (from Pending or Accepted status)
-   - **Recipient:** Landlord
-   - **Subject:** "Rent Cancelled - [Property Title]"
-
-3. **Accepted** - When a landlord accepts a rent request
-   - **Recipient:** User (tenant)
-   - **Subject:** "Rent Request Accepted - [Property Title]"
-
-4. **Rejected** - When a landlord rejects a rent request
-   - **Recipient:** User (tenant)
-   - **Subject:** "Rent Request Rejected - [Property Title]"
-
-5. **Paid** - When a user completes payment for an accepted rent
-   - **Recipient:** Landlord
-   - **Subject:** "Payment Received - [Property Title]"
-
-### Notification System Architecture
-
-The notification system uses:
-- **RabbitMQ** for message queuing
-- **eRent.Subscriber** service that listens for rent notifications
-- **Gmail SMTP** for sending HTML email notifications
-- Asynchronous processing to avoid blocking rent operations
+### Transport
+The email service uses **Gmail SMTP** to send outbound messages. Configuration lives in the `EmailSenderService` and can be switched for production.
 
 ## 🏗️ Project Structure
 
 ```
-eRent/
-├── eRent.WebAPI/              # .NET Core Web API (Backend)
-│   ├── Controllers/           # API Controllers
-│   ├── Filters/               # Exception and Authentication filters
-│   ├── Assets/                 # Property images and user pictures
+QuickWork/
+├── QuickWork.WebAPI/          # .NET Core Web API (Backend)
+│   ├── Controllers/           # API Controllers (Users, JobPostings, ...)
+│   ├── Helpers/               # JWT token helper, error handling
 │   └── Program.cs             # Application entry point
 │
-├── eRent.Services/             # Business Logic Layer
-│   ├── Database/               # Entity Framework models and DbContext
-│   │   ├── DataSeeder.cs      # Database seeding with test data
-│   │   └── eRentDbContext.cs  # Database context
+├── QuickWork.Services/        # Business Logic Layer
+│   ├── Database/              # Entity Framework Core, DbContext, DataSeeder
 │   ├── Services/              # Service implementations
-│   ├── Interfaces/             # Service interfaces
-│   └── Helpers/                # Utility classes
+│   ├── Interfaces/            # Service interfaces
+│   └── Helpers/               # Utility classes (email, password hashing)
 │
-├── eRent.Model/                # Data Transfer Objects (DTOs)
-│   ├── Requests/               # Request models
-│   ├── Responses/              # Response models
-│   └── SearchObjects/          # Search/filter models
+├── QuickWork.Model/           # Data Transfer Objects (DTOs)
+│   ├── Requests/              # Upsert/request models
+│   ├── Responses/             # Response models
+│   └── SearchObjects/         # Search/filter models
 │
-├── eRent.Subscriber/           # Email Notification Service
-│   ├── Services/               # Email sender and template services
-│   └── Models/                 # Notification models
+├── QuickWork.Subscriber/      # Background email notification service
+│   ├── Services/              # Email sender and template services
+│   └── Models/                # Notification models
 │
-└── UI/                         # Flutter Applications
-    ├── erent_desktop/          # Admin desktop app
-    ├── erent_landlord_desktop/ # Landlord desktop app
-    └── erent_mobile/           # Mobile app
+├── Assets/                    # Brand assets (logo) used by the app
+│
+└── UI/                        # Flutter Applications
+    └── QuickWork_Mobile/      # Mobile app (browse, publish, apply)
 ```
 
 ## 🛠️ Technology Stack
 
 ### Backend
-- **.NET Core** - Web API framework
+- **ASP.NET Core** - Web API framework
 - **Entity Framework Core** - ORM for database operations
 - **SQL Server** - Database
-- **RabbitMQ** - Message queue for notifications
-- **Mapster** - Object mapping
+- **JWT** - Token-based authentication
 - **Swagger** - API documentation
 
 ### Frontend
 - **Flutter** - Cross-platform UI framework
 - **Dart** - Programming language
-
-### Infrastructure
-- **Docker** - Containerization
-- **Docker Compose** - Multi-container orchestration
+- **Provider** - State management
+- **Dio** - HTTP networking
+- **shared_preferences** - Local session persistence
 
 ## 🗄️ Database
 
-The system uses SQL Server with Entity Framework Core. The database is automatically seeded with:
-- Test users (admin, landlords, regular users)
-- Property types and amenities
-- Sample properties with images
-- Countries and cities (Balkan region)
-- Sample rent records and reviews
+The system uses SQL Server with Entity Framework Core. The database is seeded with:
+- Test users (e.g. `berinm`)
+- Job categories
+- Cities and gender lookups
+- Sample job postings
+- Countries / cities for the Balkan region
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - .NET SDK
 - Flutter SDK
-- Docker and Docker Compose
-- SQL Server (or use Docker container)
-
-### Running with Docker
-
-1. Configure environment variables in `.env` file or `docker-compose.yml`
-2. Run: `docker-compose up`
+- SQL Server (or Docker)
 
 ### Running Locally
 
-1. Start SQL Server and RabbitMQ
-2. Update connection strings in `appsettings.json`
-3. Run the WebAPI project
-4. Run the Subscriber service for email notifications
-5. Run Flutter apps from their respective directories
+1. Start SQL Server and configure the connection string in `appsettings.json`.
+2. Run the **QuickWork.WebAPI** project (the API will seed the database on startup).
+3. Start **QuickWork.Subscriber** if email notifications are needed.
+4. Run the Flutter mobile app from `QuickWork/UI/QuickWork_Mobile/`:
+   ```bash
+   flutter pub get
+   flutter run
+   ```
+
+> **Note:** The mobile app is configured for a development backend at `https://192.168.0.15:7074` with a self-signed certificate. Update `AppConstants.apiBaseUrl` for your environment, and remove the self-signed handling for production.
 
 ## 📝 Features
 
-- Property management (CRUD operations)
-- User authentication and authorization
-- Rent request management
-- Payment processing
-- Email notifications
-- Property search and filtering
-- Reviews and ratings
-- Analytics for landlords and admins
-- Chat functionality
-- Image upload and management
+- **Browse jobs as a guest** — no account required to view listings
+- **User registration & login** (optional login, auto-login on register)
+- **Job publishing** — post a job (category, city, payment, schedule)
+- **Apply to jobs** — one-tap application with login-gating
+- **My Jobs tab** — see published jobs and submitted applications
+- **Profile tab** — view and edit profile details
+- **Search & filtering** — find jobs by title, category, and city
+- **Session persistence** across app restarts
 
 ## 🔒 Security
 
-- Basic Authentication for API access
+- JWT bearer-token authentication
 - Password hashing with salt
-- Role-based access control (Administrator, User, Landlord)
+- Role-based access control
+- Actions are **account-gated**: browsing is public, but publishing/applying requires an account
 - Input validation and exception handling
 
 ## 📄 License
