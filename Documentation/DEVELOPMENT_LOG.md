@@ -21,7 +21,7 @@ A live tracker of what's been built and what's next.
 | S7 | Publish Job form | ✅ Done | For logged-in users, "+" FAB |
 | S8 | "My Jobs" tab | ✅ Done | Published jobs + applications |
 | S9 | Profile tab | ✅ Done | User info + edit |
-| Polish | Splash screen, README, search & filters | 🔄 In progress | First-launch logo splash done; README corrected |
+| Polish | Splash screen, README, search & filters | ✅ Done | Logo splash, README, + search screen |
 
 ---
 
@@ -118,7 +118,7 @@ A live tracker of what's been built and what's next.
 
 - **✅ First-launch logo splash** — added `SplashScreen` (fade-in branded logo), shown on first launch only (tracked via `shared_preferences`), then hands off to home. Deliberately **no video** to avoid startup lag/fragility.
 - **✅ README corrected** — rewritten to describe the actual QuickWork job-posting app (previously an unrelated "eRent" template). Same section structure preserved.
-- **⏳ Search & filters** — next up: a dedicated search screen (title / category / city).
+- **✅ Search & filters** — dedicated `SearchJobScreen` (title keyword, category, city). A tappable search bar on the Jobs feed opens it; results reload the feed, with an active-filters chip + "clear filters". Reuses the backend's existing `JobPostingSearchObject` (no backend changes).
 
 ---
 
