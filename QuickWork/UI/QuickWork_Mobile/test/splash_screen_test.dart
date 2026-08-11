@@ -29,6 +29,7 @@ void main() {
 
     // Past the first-launch delay the splash hands off to the home screen.
     await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump();
     expect(find.text('HOME'), findsOneWidget);
   });
 }

@@ -14,14 +14,16 @@ void main() {
     SharedPreferences.setMockInitialValues({'has_seen_intro': true});
   });
 
-  testWidgets('QuickWork app renders without crashing', (WidgetTester tester) async {
+    testWidgets('QuickWork app renders without crashing', (WidgetTester tester) async {
     await tester.pumpWidget(QuickWorkApp(
       authProvider: AuthProvider(),
       lookupProvider: LookupProvider(),
       jobPostingProvider: JobPostingProvider(),
     ));
 
-    // Let the splash hand off to the home screen settle.
+    // Advance past the splash hand-off timer so the home screen is reached.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1400));
     await tester.pumpAndSettle();
 
     // The home screen shows the app title.

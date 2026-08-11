@@ -21,7 +21,7 @@ A live tracker of what's been built and what's next.
 | S7 | Publish Job form | ✅ Done | For logged-in users, "+" FAB |
 | S8 | "My Jobs" tab | ✅ Done | Published jobs + applications |
 | S9 | Profile tab | ✅ Done | User info + edit |
-| Polish | Search & filters, welcome email, splash/logo, push notifications | ⏳ Next | Notifications/config pending |
+| Polish | Splash screen, README, search & filters | 🔄 In progress | First-launch logo splash done; README corrected |
 
 ---
 
@@ -108,9 +108,17 @@ A live tracker of what's been built and what's next.
 
 ## To Be Aware Of (Future / Polish)
 - **Welcome email** on registration — config target `quickworkberinm@gmail.com` in `EmailSenderService.cs`.
-- **Splash / logo screen** to be built by the user (app opens straight to home currently).
+- **Opening animation video** (`QuickWork/Assets/QuickWork Load Video.mp4`) — considered but **not** wired in; the app uses a lightweight first-launch logo splash instead to keep startup fast and smooth.
 - Remove self-signed cert handling before production.
 - Job descriptions may have diacritics/encoding quirks in existing seed data.
+
+---
+
+## Polish Progress (Current Phase)
+
+- **✅ First-launch logo splash** — added `SplashScreen` (fade-in branded logo), shown on first launch only (tracked via `shared_preferences`), then hands off to home. Deliberately **no video** to avoid startup lag/fragility.
+- **✅ README corrected** — rewritten to describe the actual QuickWork job-posting app (previously an unrelated "eRent" template). Same section structure preserved.
+- **⏳ Search & filters** — next up: a dedicated search screen (title / category / city).
 
 ---
 
