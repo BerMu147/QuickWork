@@ -59,29 +59,15 @@ class _SplashScreenState extends State<SplashScreen> {
         duration: _fadeDuration,
         curve: Curves.easeIn,
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'assets/splash_logo.png',
-                width: 180,
-                height: 180,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.work,
-                  size: 120,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'QuickWork',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          child: Image.asset(
+            'assets/splash_logo.png',
+            width: 200,
+            height: 200,
+            errorBuilder: (_, __, ___) => const Icon(
+              Icons.work,
+              size: 120,
+              color: Colors.white,
+            ),
           ),
         ),
       ),

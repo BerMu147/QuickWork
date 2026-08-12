@@ -11,7 +11,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('Splash shows the branded intro text on first launch',
+  testWidgets('Splash shows the branded logo on first launch',
       (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: const SplashScreen(),
@@ -23,8 +23,8 @@ void main() {
     // Run the fade-in animation; still under the ~450ms navigation delay.
     await tester.pump(const Duration(milliseconds: 400));
 
-    // Branded intro is visible before the hand-off.
-    expect(find.text('QuickWork'), findsOneWidget);
+    // Branded logo is visible before the hand-off.
+    expect(find.byType(Image), findsOneWidget);
     expect(find.text('HOME'), findsNothing);
 
     // Past the first-launch delay the splash hands off to the home screen.
