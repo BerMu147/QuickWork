@@ -5,6 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../models/job_application_model.dart';
 import '../models/job_posting_model.dart';
 import '../providers/job_posting_provider.dart';
+import 'conversation_screen.dart';
 
 /// Lets a publisher review all applications received for one of their own
 /// published jobs and Accept/Reject each candidate.
@@ -95,6 +96,19 @@ class _ReviewApplicationsScreenState extends State<ReviewApplicationsScreen> {
     setState(() => _updatingId = null);
   }
 
+  void _openConversation(JobApplicationModel app) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ConversationScreen(
+          jobPostingId: widget.job.id,
+          jobTitle: widget.job.title,
+          otherUserId: app.applicantUserId,
+          otherUserName: app.applicantUserName,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -174,6 +188,7 @@ class _ReviewApplicationsScreenState extends State<ReviewApplicationsScreen> {
                       isUpdating: _updatingId == app.id,
                       onAccept: () => _setStatus(app, 'Accepted'),
                       onReject: () => _setStatus(app, 'Rejected'),
+                      onMessage: () => _openConversation(app),
                     );
                   },
                 ),
@@ -190,12 +205,14 @@ class _ApplicationTile extends StatelessWidget {
     required this.isUpdating,
     required this.onAccept,
     required this.onReject,
+    required this.onMessage,
   });
 
   final JobApplicationModel application;
   final bool isUpdating;
   final VoidCallback onAccept;
   final VoidCallback onReject;
+  final VoidCallback onMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -255,10 +272,18 @@ class _ApplicationTile extends StatelessWidget {
                 style: TextStyle(fontSize: 12, color: Colors.grey[500]),
               ),
             ],
-            if (!done) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onMessage,
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    label: const Text('Message'),
+                  ),
+                ),
+                if (!done) ...[
+                  const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: isUpdating ? null : onReject,
@@ -269,7 +294,7 @@ class _ApplicationTile extends StatelessWidget {
                       label: const Text('Reject'),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: FilledButton.icon(
                       onPressed: isUpdating ? null : onAccept,
@@ -290,8 +315,8 @@ class _ApplicationTile extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
             ],
+            ),
           ],
         ),
       ),

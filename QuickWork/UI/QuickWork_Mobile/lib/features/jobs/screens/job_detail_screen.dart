@@ -5,6 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/login_screen.dart';
 import '../providers/job_posting_provider.dart';
+import 'conversation_screen.dart';
 
 /// Shows the full detail of a single job posting with an Apply button.
 ///
@@ -180,13 +181,41 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                     ),
                   ),
               ),
-                // Bottom apply bar.
+                // Bottom action bar.
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(12),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: _buildApplyButton(auth, provider),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildApplyButton(auth, provider),
+                        ),
+                        if (auth.isAuthenticated &&
+                            auth.user?.id != job.postedByUserId) ...[
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => ConversationScreen(
+                                      jobPostingId: job.id,
+                                      jobTitle: job.title,
+                                      otherUserId: job.postedByUserId,
+                                      otherUserName: job.postedByUserName,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.chat_bubble_outline),
+                              label: const Text('Message the publisher'),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),

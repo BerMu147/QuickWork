@@ -5,6 +5,7 @@ import '../core/theme/app_theme.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/jobs/providers/job_posting_provider.dart';
+import '../features/jobs/providers/message_provider.dart';
 import '../features/lookup/providers/lookup_provider.dart';
 import '../features/splash/screens/splash_screen.dart';
 
@@ -28,12 +29,14 @@ class QuickWorkApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: authProvider),
         ChangeNotifierProvider.value(value: lookupProvider),
         ChangeNotifierProvider.value(value: jobPostingProvider),
+        // Per-job conversation threads (stock provider, no config needed).
+        ChangeNotifierProvider<MessageProvider>(create: (_) => MessageProvider()),
       ],
       child: MaterialApp(
         title: 'QuickWork',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        // First-launch intro (logo + video), then the home screen.
+        // First-launch intro (logo), then the home screen.
         home: const SplashScreen(),
         routes: {
           '/home': (context) => const HomeScreen(),
