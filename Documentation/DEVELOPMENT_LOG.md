@@ -101,7 +101,7 @@ A live tracker of what's been built and what's next.
 ## Testing Notes
 - `flutter analyze` — no issues.
 - Offline widget tests pass.
-- Live-backend integration tests pass (login, registration, job posting/lookup, job application, job publish, my-jobs, profile update).
+- Live-backend integration tests pass (login, registration, job posting/lookup, job application, job publish, my-jobs, profile update, publisher accept/reject).
 - Backend integration tests require the backend to be running.
 
 ---
@@ -116,9 +116,10 @@ A live tracker of what's been built and what's next.
 
 ## Polish Progress (Current Phase)
 
-- **✅ First-launch logo splash** — added `SplashScreen` (fade-in branded logo), shown on first launch only (tracked via `shared_preferences`), then hands off to home. Deliberately **no video** to avoid startup lag/fragility.
+- **✅ First-launch logo splash** — added `SplashScreen` (fade-in branded logo), shown on first launch only (tracked via `shared_preferences`), then hands off to home. Deliberately **no video** to avoid startup lag/fragility. Refined to show only the brand logo (the logo already contains the "QuickWork" text, so no separate heading).
 - **✅ README corrected** — rewritten to describe the actual QuickWork job-posting app (previously an unrelated "eRent" template). Same section structure preserved.
 - **✅ Search & filters** — dedicated `SearchJobScreen` (title keyword, category, city). A tappable search bar on the Jobs feed opens it; results reload the feed, with an active-filters chip + "clear filters". Reuses the backend's existing `JobPostingSearchObject` (no backend changes).
+- **✅ Publisher review / Accept–Reject** — added `ReviewApplicationsScreen` reachable by tapping a published job in "My Jobs → Published". Lists each candidate (avatar initials, name, email, message, applied date) with **Accept / Reject** buttons. Uses the existing `PUT /JobApplications/{id}` endpoint; statuses update live and any accepted/rejected applications remove their action buttons. Updated `JobPostingRepository` + `JobPostingProvider` accordingly.
 
 ---
 
@@ -126,7 +127,7 @@ A live tracker of what's been built and what's next.
 
 ### Application status lifecycle (publisher side)
 - Backend status values: **Pending, Accepted, Rejected, Withdrawn** (it's *Rejected*, not "Denied"). UI color-codes each.
-- **Not yet clear how the publisher updates a candidate's status** (accept/reject) from within the app. Needs a publisher-side "review applications" UI + `PUT /JobApplications/{id}` update flow. *(Note taken — to implement in polish.)*
+- ✅ **Implemented** in polish: publisher reviews applications for their job (My Jobs → Published → tap the job) and can **Accept/Reject** via `PUT /JobApplications/{id}`. Statuses appear in the "Applications" tab of My Jobs too.
 
 ### Contact / communication flow
 - After an application is **accepted**, the Publisher and Worker need to get in touch.
