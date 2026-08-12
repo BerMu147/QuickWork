@@ -101,7 +101,7 @@ A live tracker of what's been built and what's next.
 ## Testing Notes
 - `flutter analyze` — no issues.
 - Offline widget tests pass.
-- Live-backend integration tests pass (login, registration, job posting/lookup, job application, job publish, my-jobs, profile update, publisher accept/reject).
+- Live-backend integration tests pass (login, registration, job posting/lookup, job application, job publish, my-jobs, profile update, publisher accept/reject, messaging).
 - Backend integration tests require the backend to be running.
 
 ---
@@ -120,6 +120,7 @@ A live tracker of what's been built and what's next.
 - **✅ README corrected** — rewritten to describe the actual QuickWork job-posting app (previously an unrelated "eRent" template). Same section structure preserved.
 - **✅ Search & filters** — dedicated `SearchJobScreen` (title keyword, category, city). A tappable search bar on the Jobs feed opens it; results reload the feed, with an active-filters chip + "clear filters". Reuses the backend's existing `JobPostingSearchObject` (no backend changes).
 - **✅ Publisher review / Accept–Reject** — added `ReviewApplicationsScreen` reachable by tapping a published job in "My Jobs → Published". Lists each candidate (avatar initials, name, email, message, applied date) with **Accept / Reject** buttons. Uses the existing `PUT /JobApplications/{id}` endpoint; statuses update live and any accepted/rejected applications remove their action buttons. Updated `JobPostingRepository` + `JobPostingProvider` accordingly.
+- **✅ Per-job messaging (publisher ↔ worker)** — in-app chat to coordinate job details without exposing contact info publicly. Added `MessageModel` / `MessageRepository` / `MessageProvider` + a `ConversationScreen` (chat bubbles, send box, auto-mark-incoming-as-read). Entry points: publisher → "Message" on an applicant in Review Applications; worker (logged in) → "Message the publisher" on the job detail page. Reuses the existing `MessagesController` (`POST/GET/PATCH mark-as-read`) — no backend changes.
 
 ---
 
@@ -131,8 +132,8 @@ A live tracker of what's been built and what's next.
 
 ### Contact / communication flow
 - After an application is **accepted**, the Publisher and Worker need to get in touch.
-- **Open options to decide:** private contact via **phone number** and/or an **in-app messaging** system (`MessagesController` exists on the backend).
-- *(Note taken — to decide & implement in polish.)*
+- ✅ **Implemented in polish:** per-job in-app messaging (publisher ↔ worker) to coordinate details — no public contact exposure. Initiated from the Review Applications screen or the job detail page.
+- *(Optionally, a future "Messages" inbox tab could aggregate all conversations; currently threads are reached per job.)*
 
 ### Trust / anti-scam measures
 - **How to verify a user/publisher is real?** (e.g. could prevent unreasonable/fake job postings.)
