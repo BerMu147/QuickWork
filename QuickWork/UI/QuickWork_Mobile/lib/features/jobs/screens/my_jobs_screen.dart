@@ -7,7 +7,7 @@ import '../../auth/screens/login_screen.dart';
 import '../models/job_application_model.dart';
 import '../providers/job_posting_provider.dart';
 import '../widgets/job_posting_card.dart';
-import 'job_detail_screen.dart';
+import 'review_applications_screen.dart';
 
 /// The "My Jobs" tab — shows the jobs the user published and the applications
 /// they submitted (and receive). Requires an account.
@@ -134,14 +134,20 @@ class _PublishedJobs extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
           final job = provider.myJobPostings[index];
+          // Capture before the async gap so we don't use context after await.
+          final auth = context.read<AuthProvider>();
+          final jobsProvider = context.read<JobPostingProvider>();
           return JobPostingCard(
             job: job,
-            onTap: () {
-              Navigator.of(context).push(
+            onTap: () async {
+              // Publishers open their job to review & respond to applications.
+              await Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => JobDetailScreen(jobId: job.id),
+                  builder: (_) => ReviewApplicationsScreen(job: job),
                 ),
               );
+              // Refresh so statuses/decisions stay up to date.
+              await jobsProvider.loadMyJobs(auth.user?.id ?? 0);
             },
           );
         },

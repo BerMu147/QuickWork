@@ -126,6 +126,43 @@ class JobPostingProvider extends ChangeNotifier {
     }
   }
 
+  /// Updates the status of one of the user's received applications
+  /// (publisher Accept/Reject) and refreshes the local reference data.
+  ///
+  /// Returns true on success, false on failure (error in [applicationError]).
+  Future<bool> updateApplicationStatus({
+    required int applicationId,
+    required int jobPostingId,
+    required String status,
+  }) async {
+    _applicationError = null;
+    notifyListeners();
+
+    try {
+      final updated = await _repository.updateApplicationStatus(
+        applicationId: applicationId,
+        jobPostingId: jobPostingId,
+        status: status,
+      );
+
+      // Update the matching entry in the local applications list, if present.
+      final index = _myApplications.indexWhere((a) => a.id == updated.id);
+      if (index != -1) {
+        _myApplications = [..._myApplications]..[index] = updated;
+      }
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _applicationError = e.message;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _applicationError = 'Unable to update the application. Please try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Returns the applications received for one of the user's own job postings.
   Future<List<JobApplicationModel>> applicationsForJob(int jobPostingId) =>
       _repository.fetchApplicationsForJob(jobPostingId);

@@ -190,5 +190,27 @@ class JobPostingRepository {
       throw ApiException.fromDioError(e);
     }
   }
-}
 
+  /// Updates the status of a job application (publisher Accept/Reject) via
+  /// `PUT /JobApplications/{id}`. Returns the updated application.
+  Future<JobApplicationModel> updateApplicationStatus({
+    required int applicationId,
+    required int jobPostingId,
+    required String status,
+    String? message,
+  }) async {
+    try {
+      final response = await _apiClient.dio.put<Map<String, dynamic>>(
+        '/JobApplications/$applicationId',
+        data: JobApplicationRequest(
+          jobPostingId: jobPostingId,
+          status: status,
+          message: message,
+        ).toJson(),
+      );
+      return JobApplicationModel.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+}
