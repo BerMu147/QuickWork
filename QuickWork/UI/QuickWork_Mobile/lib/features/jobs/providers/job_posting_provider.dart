@@ -38,6 +38,26 @@ class JobPostingProvider extends ChangeNotifier {
   String? get applicationError => _applicationError;
   String? get publishError => _publishError;
 
+  /// Total number of jobs the user has completed.
+  ///
+  /// Combines the jobs the user **published** that were marked Completed with
+  /// the jobs they were **hired for** (accepted application) as a worker.
+  /// Relies on [loadMyJobs] having populated [_myJobPostings] and
+  /// [_myApplications].
+  int get completedJobsCount {
+    final publisherCompleted = _myJobPostings
+        .where((j) => j.status.toLowerCase() == 'completed')
+        .length;
+    final workerCompleted = _myApplications
+        .where((a) => a.status.toLowerCase() == 'accepted')
+        .length;
+    return publisherCompleted + workerCompleted;
+  }
+
+  /// Whether the user's My Jobs data (posts + applications) has been loaded.
+  bool get hasMyJobsData =>
+      _myJobPostings.isNotEmpty || _myApplications.isNotEmpty;
+
   /// Loads the job postings (optionally filtered). Returns true on success.
   Future<bool> loadJobPostings({JobPostingQuery? query}) async {
     _isLoading = true;

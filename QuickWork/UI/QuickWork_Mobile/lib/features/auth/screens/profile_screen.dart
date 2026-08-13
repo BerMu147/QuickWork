@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../jobs/providers/job_posting_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/login_screen.dart';
 import 'edit_profile_screen.dart';
@@ -9,12 +10,32 @@ import 'edit_profile_screen.dart';
 /// The "Profile" tab — shows the logged-in user's information.
 ///
 /// Login-gated: a guest opening this tab is prompted to log in.
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Ensure My Jobs data is loaded once the user is known, so the
+    // completed-jobs stat below is accurate. Safe no-op for guests.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthProvider>();
+      final jobProvider = context.read<JobPostingProvider>();
+      if (auth.user != null) {
+        jobProvider.loadMyJobs(auth.user!.id);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final jobs = context.watch<JobPostingProvider>();
     final theme = Theme.of(context);
 
     if (!auth.isAuthenticated) {
@@ -84,6 +105,33 @@ class ProfileScreen extends StatelessWidget {
             '@${user.username}',
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: Colors.grey[600]),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Completed jobs stat card.
+        Card(
+          elevation: 1,
+          color: const Color(0x0F129ACA),
+          child: ListTile(
+            leading: const Icon(Icons.verified_outlined,
+                color: AppConstants.primary),
+            title: Text(
+              '${jobs.completedJobsCount}',
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: AppConstants.primary,
+              ),
+            ),
+            subtitle: const Text('Completed jobs'),
+            trailing: jobs.isLoadingMyJobs
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
           ),
         ),
         const SizedBox(height: 24),

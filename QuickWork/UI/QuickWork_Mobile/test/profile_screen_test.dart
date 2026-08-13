@@ -10,6 +10,7 @@ import 'package:quickwork_mobile/features/auth/models/login_response.dart';
 import 'package:quickwork_mobile/features/auth/models/user_model.dart';
 import 'package:quickwork_mobile/features/auth/providers/auth_provider.dart';
 import 'package:quickwork_mobile/features/auth/screens/profile_screen.dart';
+import 'package:quickwork_mobile/features/jobs/providers/job_posting_provider.dart';
 import 'package:quickwork_mobile/features/lookup/providers/lookup_provider.dart';
 
 class _FakeAuthRepository extends AuthRepository {
@@ -46,6 +47,9 @@ void main() {
       providers: [
         ChangeNotifierProvider<AuthProvider>.value(value: AuthProvider()),
         ChangeNotifierProvider<LookupProvider>.value(value: LookupProvider()),
+        ChangeNotifierProvider<JobPostingProvider>.value(
+          value: JobPostingProvider(),
+        ),
       ],
       child: const MaterialApp(home: Scaffold(body: ProfileScreen())),
     ));
@@ -63,17 +67,24 @@ void main() {
       providers: [
         ChangeNotifierProvider<AuthProvider>.value(value: auth),
         ChangeNotifierProvider<LookupProvider>.value(value: LookupProvider()),
+        ChangeNotifierProvider<JobPostingProvider>.value(
+          value: JobPostingProvider(),
+        ),
       ],
       child: const MaterialApp(home: Scaffold(body: ProfileScreen())),
     ));
     await tester.pumpAndSettle();
-
     expect(find.text('Test User'), findsOneWidget);
     expect(find.text('@testuser'), findsOneWidget);
     expect(find.text('test@example.com'), findsOneWidget);
     expect(find.text('061123456'), findsOneWidget);
     expect(find.text('Sarajevo'), findsOneWidget);
     expect(find.text('Male'), findsOneWidget);
+    // The added "Completed jobs" stat card pushes the edit button below the
+    // test viewport, so scroll down to it before asserting.
+    await tester.scrollUntilVisible(find.text('Edit profile'), 100);
     expect(find.text('Edit profile'), findsOneWidget);
   });
 }
+
+
