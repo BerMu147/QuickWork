@@ -7,7 +7,7 @@ import '../models/job_application_model.dart';
 import '../models/job_posting_model.dart';
 import '../models/job_posting_upsert_request.dart';
 
-/// Holds the list of job postings and manages their loading/application state.
+/// Holds the list of job post  ings and manages their loading/application state.
 class JobPostingProvider extends ChangeNotifier {
   JobPostingProvider({JobPostingRepository? repository})
       : _repository = repository ?? JobPostingRepository();
@@ -103,6 +103,26 @@ class JobPostingProvider extends ChangeNotifier {
       // Keep existing list; not critical.
     }
   }
+
+  /// Returns the current user's application to [jobPostingId], or null if they
+  /// have not applied. Fetches (and caches) the user's applications when needed.
+  Future<JobApplicationModel?> applicationForJob({
+    required int jobPostingId,
+    required int applicantUserId,
+  }) async {
+    if (_myApplications.isEmpty && applicantUserId > 0) {
+      _myApplications =
+          await _repository.fetchApplicationsForUser(applicantUserId);
+    }
+    for (final a in _myApplications) {
+      if (a.jobPostingId == jobPostingId) return a;
+    }
+    return null;
+  }
+
+  /// Whether [jobPostingId] is one of the current user's own postings.
+  bool ownsJob(int jobPostingId) =>
+      _myJobPostings.any((j) => j.id == jobPostingId);
 
   /// Loads the jobs the user has published plus their applications.
   ///

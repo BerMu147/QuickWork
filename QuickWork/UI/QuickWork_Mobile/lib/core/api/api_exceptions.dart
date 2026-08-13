@@ -46,8 +46,21 @@ class ApiException implements Exception {
         var msg = 'Unexpected server error. Please try again.';
 
         // Try to surface a backend-supplied message.
-        if (data is Map && data['message'] != null) {
-          msg = data['message'].toString();
+        if (data is Map) {
+          // Common shape: { "message": "..." }
+          if (data['message'] != null) {
+            msg = data['message'].toString();
+          }
+          // ASP.NET filter shape: { "errors": { "key": ["msg", ...] } }
+          else {
+            final errors = data['errors'];
+            if (errors is Map && errors.isNotEmpty) {
+              final first = errors.values.first;
+              if (first is List && first.isNotEmpty) {
+                msg = first.first.toString();
+              }
+            }
+          }
         } else if (status == 401) {
           msg = 'Incorrect username or password.';
         } else if (status == 403) {

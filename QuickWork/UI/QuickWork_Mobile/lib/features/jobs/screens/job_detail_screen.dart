@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/login_screen.dart';
+import '../models/job_application_model.dart';
 import '../providers/job_posting_provider.dart';
 import 'conversation_screen.dart';
 
@@ -23,6 +24,30 @@ class JobDetailScreen extends StatefulWidget {
 
 class _JobDetailScreenState extends State<JobDetailScreen> {
   bool _applied = false;
+  JobApplicationModel? _myApplication;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final auth = context.read<AuthProvider>();
+      final provider = context.read<JobPostingProvider>();
+      final job = provider.byId(widget.jobId);
+      if (auth.isAuthenticated && job != null) {
+        // Load my own application so we can show its status instead of a
+        // (duplicate) "Apply" button. Own postings never show Apply.
+        if (auth.user?.id != job.postedByUserId) {
+          final myApp = await provider.applicationForJob(
+            jobPostingId: widget.jobId,
+            applicantUserId: auth.user?.id ?? 0,
+          );
+          if (!mounted) return;
+          setState(() => _myApplication = myApp);
+          if (myApp != null) setState(() => _applied = true);
+        }
+      }
+    });
+  }
 
   Future<void> _handleApply() async {
     final auth = context.read<AuthProvider>();
@@ -62,6 +87,10 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
     final auth = context.watch<AuthProvider>();
     final job = provider.byId(widget.jobId);
     final theme = Theme.of(context);
+
+    final isOwner = auth.isAuthenticated && job != null
+        ? auth.user?.id == job.postedByUserId
+        : false;
 
     return Scaffold(
       appBar: AppBar(
@@ -190,10 +219,10 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                       children: [
                         SizedBox(
                           width: double.infinity,
-                          child: _buildApplyButton(auth, provider),
+                          child: _buildApplyButton(auth, provider, isOwner),
                         ),
                         if (auth.isAuthenticated &&
-                            auth.user?.id != job.postedByUserId) ...[
+                            !isOwner) ...[
                           const SizedBox(height: 8),
                           SizedBox(
                             width: double.infinity,
@@ -224,7 +253,25 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
     );
   }
 
-  Widget _buildApplyButton(AuthProvider auth, JobPostingProvider provider) {
+  Widget _buildApplyButton(
+      AuthProvider auth, JobPostingProvider provider, bool isOwner) {
+    // A publisher viewing their own job cannot apply to it.
+    if (isOwner) {
+      return ElevatedButton.icon(
+        onPressed: null,
+        icon: const Icon(Icons.work_off_outlined, color: Colors.grey),
+        label: const Text(
+          'This is your job posting',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    // Already applied — show the application status instead of "Apply".
+    if (_myApplication != null) {
+      return _statusButton(_myApplication!.status);
+    }
+
     if (_applied) {
       return ElevatedButton.icon(
         onPressed: null,
@@ -259,6 +306,29 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
               ? Icons.send_outlined
               : Icons.lock_outline),
       label: Text(provider.isApplying ? 'Applying...' : label),
+    );
+  }
+
+  /// A disabled button reflecting the user's current application status.
+  Widget _statusButton(String status) {
+    final (Color color, IconData icon, String label) = switch (status) {
+      'Accepted' => (Colors.green, Icons.check_circle_outline, 'Application Accepted'),
+      'Rejected' => (Colors.red, Icons.cancel_outlined, 'Application Rejected'),
+      'Withdrawn' => (Colors.grey, Icons.remove_circle_outline, 'Application Withdrawn'),
+      _ => (Colors.orange, Icons.schedule, 'Application Pending'),
+    };
+
+    return ElevatedButton.icon(
+      onPressed: null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        disabledBackgroundColor: color,
+      ),
+      icon: Icon(icon, color: Colors.white),
+      label: Text(
+        label,
+        style: const TextStyle(color: Colors.white),
+      ),
     );
   }
 }
