@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using QuickWork.Model;
 using QuickWork.Model.Requests;
 using QuickWork.Model.Responses;
 using QuickWork.Model.SearchObjects;
@@ -105,7 +106,7 @@ namespace QuickWork.Services.Services
 
             if (existingReview != null)
             {
-                throw new InvalidOperationException("You have already reviewed this job.");
+                throw new UserException("You have already reviewed this job.");
             }
 
             var review = new Review
@@ -181,3 +182,4 @@ namespace QuickWork.Services.Services
         }
     }
 }
+

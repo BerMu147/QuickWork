@@ -1,6 +1,7 @@
 using QuickWork.Model.Requests;
 using QuickWork.Model.Responses;
 using QuickWork.Model.SearchObjects;
+using QuickWork.Model;
 using QuickWork.Services.Database;
 using QuickWork.Services.Interfaces;
 using MapsterMapper;
@@ -41,7 +42,7 @@ namespace QuickWork.Services.Services
         {
             if (await _context.Categories.AnyAsync(c => c.Name == request.Name))
             {
-                throw new InvalidOperationException("A category with this name already exists.");
+                throw new UserException("A category with this name already exists.");
             }
         }
 
@@ -49,7 +50,7 @@ namespace QuickWork.Services.Services
         {
             if (await _context.Categories.AnyAsync(c => c.Name == request.Name && c.Id != entity.Id))
             {
-                throw new InvalidOperationException("A category with this name already exists.");
+                throw new UserException("A category with this name already exists.");
             }
         }
     }

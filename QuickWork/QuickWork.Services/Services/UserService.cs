@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System;
 using System.Security.Cryptography;
+using QuickWork.Model;
 using QuickWork.Model.Responses;
 using QuickWork.Model.SearchObjects;
 using QuickWork.Model.Requests;
@@ -127,12 +128,12 @@ namespace QuickWork.Services.Services
             // Check if user with same email or username already exists
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
-                throw new InvalidOperationException("User with this email already exists.");
+                throw new UserException("User with this email already exists.");
             }
 
             if (await _context.Users.AnyAsync(u => u.Username == request.Username))
             {
-                throw new InvalidOperationException("User with this username already exists.");
+                throw new UserException("User with this username already exists.");
             }
 
             var user = new User
@@ -190,13 +191,13 @@ namespace QuickWork.Services.Services
             // Check if email is being changed and if it already exists
             if (request.Email != user.Email && await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
-                throw new InvalidOperationException("User with this email already exists.");
+                throw new UserException("User with this email already exists.");
             }
 
             // Check if username is being changed and if it already exists
             if (request.Username != user.Username && await _context.Users.AnyAsync(u => u.Username == request.Username))
             {
-                throw new InvalidOperationException("User with this username already exists.");
+                throw new UserException("User with this username already exists.");
             }
 
             user.FirstName = request.FirstName;

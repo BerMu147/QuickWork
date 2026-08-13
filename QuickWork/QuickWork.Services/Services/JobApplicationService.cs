@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using QuickWork.Model;
 using QuickWork.Model.Requests;
 using QuickWork.Model.Responses;
 using QuickWork.Model.SearchObjects;
@@ -84,15 +85,24 @@ namespace QuickWork.Services.Services
             return MapToResponse(application);
         }
 
-        public async Task<JobApplicationResponse> CreateAsync(JobApplicationUpsertRequest request, int applicantUserId)
+                                public async Task<JobApplicationResponse> CreateAsync(JobApplicationUpsertRequest request, int applicantUserId)
         {
+            // A publisher cannot apply to their own job posting.
+            var job = await _context.JobPostings
+                .FirstOrDefaultAsync(j => j.Id == request.JobPostingId);
+
+            if (job != null && job.PostedByUserId == applicantUserId)
+            {
+                throw new UserException("You cannot apply to your own job posting.");
+            }
+
             // Check if user already applied to this job
             var existingApplication = await _context.JobApplications
                 .FirstOrDefaultAsync(ja => ja.JobPostingId == request.JobPostingId && ja.ApplicantUserId == applicantUserId);
 
             if (existingApplication != null)
             {
-                throw new InvalidOperationException("You have already applied to this job.");
+                throw new UserException("You have already applied to this job.");
             }
 
             var application = new JobApplication

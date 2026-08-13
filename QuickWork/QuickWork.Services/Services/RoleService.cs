@@ -1,6 +1,7 @@
 using QuickWork.Model.Requests;
 using QuickWork.Model.Responses;
 using QuickWork.Model.SearchObjects;
+using QuickWork.Model;
 using QuickWork.Services.Database;
 using QuickWork.Services.Interfaces;
 using MapsterMapper;
@@ -42,7 +43,7 @@ namespace QuickWork.Services.Services
             // Check for duplicate role name
             if (await _context.Roles.AnyAsync(r => r.Name == request.Name))
             {
-                throw new InvalidOperationException("A role with this name already exists.");
+                throw new UserException("A role with this name already exists.");
             }
         }
 
@@ -51,7 +52,7 @@ namespace QuickWork.Services.Services
             // Check for duplicate role name (excluding current role)
             if (await _context.Roles.AnyAsync(r => r.Name == request.Name && r.Id != entity.Id))
             {
-                throw new InvalidOperationException("A role with this name already exists.");
+                throw new UserException("A role with this name already exists.");
             }
         }
     }
