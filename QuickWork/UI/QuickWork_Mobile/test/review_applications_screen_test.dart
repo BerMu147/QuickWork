@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:quickwork_mobile/core/api/api_client.dart';
+import 'package:quickwork_mobile/features/auth/providers/auth_provider.dart';
 import 'package:quickwork_mobile/features/jobs/data/job_posting_repository.dart';
 import 'package:quickwork_mobile/features/jobs/models/job_application_model.dart';
 import 'package:quickwork_mobile/features/jobs/models/job_posting_model.dart';
@@ -46,6 +47,31 @@ class _FakeRepo extends JobPostingRepository {
       appliedAt: _apps[idx].appliedAt,
       isActive: true,
     );
+  }
+
+  final List<String> _statuses = [];
+  List<String> get statuses => _statuses;
+
+  @override
+  Future<JobPostingModel> updateJobStatus({
+    required int jobPostingId,
+    required String status,
+    required int postedByUserId,
+  }) async {
+    _statuses.add(status);
+    return JobPostingModel.fromJson({
+      'id': _job.id,
+      'title': _job.title,
+      'description': _job.description,
+      'cityId': _job.cityId,
+      'cityName': _job.cityName,
+      'categoryId': _job.categoryId,
+      'categoryName': _job.categoryName,
+      'paymentAmount': _job.paymentAmount,
+      'status': status,
+      'postedByUserId': _job.postedByUserId,
+      'postedByUserName': _job.postedByUserName,
+    });
   }
 }
 
@@ -106,4 +132,48 @@ void main() {
 
     expect(repo.setStatuses, contains('Accepted'));
   });
+
+  testWidgets('Publisher can advance the job status to complete',
+      (tester) async {
+    final apps = [
+      JobApplicationModel.fromJson(const {
+        'id': 10,
+        'jobPostingId': 1,
+        'jobPostingTitle': 'Fix the roof',
+        'applicantUserId': 2,
+        'applicantUserName': 'Jane D.',
+        'applicantUserEmail': 'jane@test.com',
+        'message': 'I can do this.',
+        'status': 'Pending',
+      }),
+    ];
+    final repo = _FakeRepo(apps);
+    final provider = JobPostingProvider(repository: repo);
+
+    await tester.pumpWidget(MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthProvider>.value(value: AuthProvider()),
+        ChangeNotifierProvider<JobPostingProvider>.value(value: provider),
+      ],
+      child: MaterialApp(home: ReviewApplicationsScreen(job: _job)),
+    ));
+    await tester.pumpAndSettle();
+
+    // Open job -> shows "Mark In Progress".
+    expect(find.text('Mark In Progress'), findsOneWidget);
+
+    await tester.tap(find.text('Mark In Progress'));
+    await tester.pumpAndSettle();
+
+    // Now InProgress -> shows "Mark Complete".
+    expect(repo.statuses, contains('InProgress'));
+    expect(find.text('Mark Complete'), findsOneWidget);
+
+    await tester.tap(find.text('Mark Complete'));
+    await tester.pumpAndSettle();
+
+    expect(repo.statuses, contains('Completed'));
+    expect(find.text('This job is marked as completed.'), findsOneWidget);
+  });
 }
+

@@ -25,6 +25,7 @@ class JobPostingProvider extends ChangeNotifier {
   String? _error;
   String? _applicationError;
   String? _publishError;
+  String? _statusError;
 
   List<JobPostingModel> get jobPostings => _jobPostings;
   List<JobPostingModel> get myJobPostings => _myJobPostings;
@@ -37,6 +38,7 @@ class JobPostingProvider extends ChangeNotifier {
   String? get error => _error;
   String? get applicationError => _applicationError;
   String? get publishError => _publishError;
+  String? get statusError => _statusError;
 
   /// Total number of jobs the user has completed.
   ///
@@ -198,6 +200,45 @@ class JobPostingProvider extends ChangeNotifier {
       return false;
     } catch (_) {
       _applicationError = 'Unable to update the application. Please try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Transitions one of the user's own jobs to a new status (publisher
+  /// "mark in progress" / "mark complete"). Updates the local lists so the
+  /// change is reflected immediately. Returns true on success.
+  Future<bool> changeJobStatus({
+    required int jobPostingId,
+    required String status,
+    required int postedByUserId,
+  }) async {
+    _statusError = null;
+    notifyListeners();
+
+    try {
+      final updated = await _repository.updateJobStatus(
+        jobPostingId: jobPostingId,
+        status: status,
+        postedByUserId: postedByUserId,
+      );
+
+      // Refresh the matching entries in both local lists.
+      void replaceInList(List<JobPostingModel> list) {
+        final i = list.indexWhere((j) => j.id == updated.id);
+        if (i != -1) list[i] = updated;
+      }
+
+      replaceInList(_myJobPostings);
+      replaceInList(_jobPostings);
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _statusError = e.message;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _statusError = 'Unable to update the job status. Please try again.';
       notifyListeners();
       return false;
     }

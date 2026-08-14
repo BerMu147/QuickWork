@@ -191,6 +191,27 @@ class JobPostingRepository {
     }
   }
 
+  /// Transitions a job's status (publisher "mark in progress" / "mark
+  /// complete") via `PUT /JobPostings/{id}/status`. Returns the updated job.
+  Future<JobPostingModel> updateJobStatus({
+    required int jobPostingId,
+    required String status,
+    required int postedByUserId,
+  }) async {
+    try {
+      final response = await _apiClient.dio.put<Map<String, dynamic>>(
+        '/JobPostings/$jobPostingId/status',
+        queryParameters: {
+          'postedByUserId': postedByUserId,
+          'status': status,
+        },
+      );
+      return JobPostingModel.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   /// Updates the status of a job application (publisher Accept/Reject) via
   /// `PUT /JobApplications/{id}`. Returns the updated application.
   Future<JobApplicationModel> updateApplicationStatus({

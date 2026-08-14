@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/job_application_model.dart';
 import '../models/job_posting_model.dart';
 import '../providers/job_posting_provider.dart';
@@ -25,10 +26,14 @@ class _ReviewApplicationsScreenState extends State<ReviewApplicationsScreen> {
   String? _error;
   int? _updatingId;
   String? _updateError;
+  late String _jobStatus;
+  bool _changingStatus = false;
+  String? _statusError;
 
   @override
   void initState() {
     super.initState();
+    _jobStatus = widget.job.status;
     _load();
   }
 
@@ -109,6 +114,31 @@ class _ReviewApplicationsScreenState extends State<ReviewApplicationsScreen> {
     );
   }
 
+  /// Transitions this job to a new status (publisher controls the lifecycle).
+  Future<void> _changeStatus(String status) async {
+    setState(() {
+      _changingStatus = true;
+      _statusError = null;
+    });
+
+    final auth = context.read<AuthProvider>();
+    final provider = context.read<JobPostingProvider>();
+    final ok = await provider.changeJobStatus(
+      jobPostingId: widget.job.id,
+      status: status,
+      postedByUserId: auth.user?.id ?? 0,
+    );
+
+    if (!mounted) return;
+
+    if (ok) {
+      setState(() => _jobStatus = status);
+    } else {
+      setState(() => _statusError = provider.statusError);
+    }
+    setState(() => _changingStatus = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -166,6 +196,21 @@ class _ReviewApplicationsScreenState extends State<ReviewApplicationsScreen> {
             ],
           ),
         ),
+        // Job status + lifecycle controls (publisher owns the job).
+        _StatusControl(
+          status: _jobStatus,
+          isChanging: _changingStatus,
+          onMarkInProgress: () => _changeStatus('InProgress'),
+          onMarkComplete: () => _changeStatus('Completed'),
+        ),
+        if (_statusError != null)
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              _statusError!,
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
+          ),
         if (_updateError != null)
           Padding(
             padding: const EdgeInsets.all(12),
@@ -329,6 +374,130 @@ class _ApplicationTile extends StatelessWidget {
     final last =
         parts.length > 1 && parts[1].isNotEmpty ? parts[1][0] : '';
     return '$first$last'.toUpperCase();
+  }
+}
+
+/// Shows the current job status and lets the publishing owner advance it
+/// through the lifecycle: Open -> InProgress -> Completed.
+class _StatusControl extends StatelessWidget {
+  const _StatusControl({
+    required this.status,
+    required this.isChanging,
+    required this.onMarkInProgress,
+    required this.onMarkComplete,
+  });
+
+  final String status;
+  final bool isChanging;
+  final VoidCallback onMarkInProgress;
+  final VoidCallback onMarkComplete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = switch (status) {
+      'Completed' => Colors.green,
+      'Cancelled' => Colors.grey,
+      'InProgress' => Colors.blue,
+      _ => Colors.orange,
+    };
+
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.check_circle_outline, color: AppConstants.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Job status',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (status == 'Open')
+              _TransitionButton(
+                onPressed: isChanging ? null : onMarkInProgress,
+                icon: Icons.play_arrow,
+                label: 'Mark In Progress',
+              )
+            else if (status == 'InProgress')
+              _TransitionButton(
+                onPressed: isChanging ? null : onMarkComplete,
+                icon: Icons.verified,
+                label: 'Mark Complete',
+              )
+            else
+              Text(
+                status == 'Completed'
+                    ? 'This job is marked as completed.'
+                    : 'This job is no longer active.',
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A full-width action button used by the status control.
+class _TransitionButton extends StatelessWidget {
+  const _TransitionButton({
+    required this.onPressed,
+    required this.icon,
+    required this.label,
+  });
+
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final busy = onPressed == null;
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        onPressed: onPressed,
+        icon: busy
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : Icon(icon, size: 18),
+        label: Text(label),
+      ),
+    );
   }
 }
 
