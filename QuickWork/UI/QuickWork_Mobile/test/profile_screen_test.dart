@@ -6,9 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:quickwork_mobile/core/api/api_client.dart';
 import 'package:quickwork_mobile/features/auth/data/auth_repository.dart';
+import 'package:quickwork_mobile/features/auth/data/user_skill_repository.dart';
 import 'package:quickwork_mobile/features/auth/models/login_response.dart';
 import 'package:quickwork_mobile/features/auth/models/user_model.dart';
+import 'package:quickwork_mobile/features/auth/models/user_skill_model.dart';
 import 'package:quickwork_mobile/features/auth/providers/auth_provider.dart';
+import 'package:quickwork_mobile/features/auth/providers/skill_provider.dart';
 import 'package:quickwork_mobile/features/auth/screens/profile_screen.dart';
 import 'package:quickwork_mobile/features/jobs/providers/job_posting_provider.dart';
 import 'package:quickwork_mobile/features/lookup/providers/lookup_provider.dart';
@@ -36,6 +39,44 @@ class _FakeAuthRepository extends AuthRepository {
   }
 }
 
+/// In-memory fake for the user-skills repository (no live backend).
+class _FakeSkillRepository extends UserSkillRepository {
+  _FakeSkillRepository({List<String> initial = const []})
+      : _skills = initial
+            .map((name) => UserSkillModel(
+                  id: _nextId++,
+                  userId: 999,
+                  skillName: name,
+                ))
+            .toList();
+
+  static int _nextId = 1;
+  final List<UserSkillModel> _skills;
+
+  @override
+  Future<List<UserSkillModel>> fetchSkillsForUser(int userId) async =>
+      List.of(_skills);
+
+  @override
+  Future<UserSkillModel> addSkill({
+    required int userId,
+    required String skillName,
+  }) async {
+    final skill = UserSkillModel(
+      id: _nextId++,
+      userId: userId,
+      skillName: skillName,
+    );
+    _skills.add(skill);
+    return skill;
+  }
+
+  @override
+  Future<void> deleteSkill({required int id, required int userId}) async {
+    _skills.removeWhere((s) => s.id == id);
+  }
+}
+
 void main() {
   setUpAll(() {
     SharedPreferences.setMockInitialValues({});
@@ -50,6 +91,7 @@ void main() {
         ChangeNotifierProvider<JobPostingProvider>.value(
           value: JobPostingProvider(),
         ),
+        ChangeNotifierProvider<SkillProvider>(create: (_) => SkillProvider()),
       ],
       child: const MaterialApp(home: Scaffold(body: ProfileScreen())),
     ));
@@ -70,6 +112,7 @@ void main() {
         ChangeNotifierProvider<JobPostingProvider>.value(
           value: JobPostingProvider(),
         ),
+        ChangeNotifierProvider<SkillProvider>(create: (_) => SkillProvider()),
       ],
       child: const MaterialApp(home: Scaffold(body: ProfileScreen())),
     ));
@@ -80,10 +123,51 @@ void main() {
     expect(find.text('061123456'), findsOneWidget);
     expect(find.text('Sarajevo'), findsOneWidget);
     expect(find.text('Male'), findsOneWidget);
-    // The added "Completed jobs" stat card pushes the edit button below the
-    // test viewport, so scroll down to it before asserting.
-    await tester.scrollUntilVisible(find.text('Edit profile'), 100);
+    // The added completed-jobs + skills cards push the edit button below the
+    // test viewport, so scroll down to it before asserting. Pin the scrollable
+    // to the profile ListView (the skills TextField also contributes a
+    // Scrollable, so `.first` here is the outer list).
+    await tester.scrollUntilVisible(
+      find.text('Edit profile'),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Edit profile'), findsOneWidget);
+  });
+
+  testWidgets('Profile lists and adds skills for the logged-in user',
+      (tester) async {
+    final auth = AuthProvider(repository: _FakeAuthRepository());
+    await auth.login(username: 'testuser', password: 'pass');
+
+    final skillRepo = _FakeSkillRepository(initial: const ['Plumbing']);
+    final skillProvider = SkillProvider(repository: skillRepo);
+
+    await tester.pumpWidget(MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthProvider>.value(value: auth),
+        ChangeNotifierProvider<LookupProvider>.value(value: LookupProvider()),
+        ChangeNotifierProvider<JobPostingProvider>.value(
+          value: JobPostingProvider(),
+        ),
+        ChangeNotifierProvider<SkillProvider>.value(value: skillProvider),
+      ],
+      child: const MaterialApp(home: Scaffold(body: ProfileScreen())),
+    ));
+    await tester.pumpAndSettle();
+
+    // Existing skill is shown as a chip.
+    expect(find.text('Plumbing'), findsOneWidget);
+
+    // The profile ListView is the first scrollable; the skills TextField is
+    // the only TextField in the tree.
+    final fieldFinder = find.byType(TextField).first;
+    await tester.enterText(fieldFinder, 'Carpentry');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    // New skill now appears as a chip.
+    expect(find.text('Carpentry'), findsOneWidget);
   });
 }
 

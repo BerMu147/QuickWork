@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../auth/models/user_skill_model.dart';
 import '../../jobs/providers/job_posting_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../auth/providers/skill_provider.dart';
 import '../../auth/screens/login_screen.dart';
 import 'edit_profile_screen.dart';
 
@@ -18,6 +20,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final _skillController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -26,16 +30,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthProvider>();
       final jobProvider = context.read<JobPostingProvider>();
+      final skillProvider = context.read<SkillProvider>();
       if (auth.user != null) {
         jobProvider.loadMyJobs(auth.user!.id);
+        skillProvider.loadSkills(auth.user!.id);
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _skillController.dispose();
+    super.dispose();
+  }
+
+  /// Adds a skill from the text field for the logged-in user.
+  Future<void> _addSkill(BuildContext context) async {
+    final name = _skillController.text.trim();
+    if (name.isEmpty) return;
+
+    final auth = context.read<AuthProvider>();
+    final skillProvider = context.read<SkillProvider>();
+    if (auth.user == null) return;
+
+    // Capture UI references before the async gap to avoid using the
+    // BuildContext after awaiting.
+    final messenger = ScaffoldMessenger.of(context);
+    final errorColor = Theme.of(context).colorScheme.error;
+
+    final ok = await skillProvider.addSkill(
+      userId: auth.user!.id,
+      skillName: name,
+    );
+    if (!mounted) return;
+
+    if (ok) {
+      _skillController.clear();
+    } else {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(skillProvider.error ?? 'Unable to add the skill.'),
+          backgroundColor: errorColor,
+        ),
+      );
+    }
+  }
+
+  /// Deletes a skill for the logged-in user.
+  Future<void> _deleteSkill(
+    BuildContext context,
+    SkillProvider skillProvider,
+    int id,
+  ) async {
+    final auth = context.read<AuthProvider>();
+    if (auth.user == null) return;
+
+    await skillProvider.deleteSkill(id: id, userId: auth.user!.id);
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final jobs = context.watch<JobPostingProvider>();
+    final skills = context.watch<SkillProvider>();
     final theme = Theme.of(context);
 
     if (!auth.isAuthenticated) {
@@ -136,6 +193,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 24),
 
+        // Skills card (add + list custom skills).
+        Card(
+          elevation: 1,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.bolt_outlined,
+                        color: AppConstants.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Skills',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (skills.isLoading)
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (skills.skills.isEmpty)
+                  Text(
+                    'No skills yet. Add a skill so publishers know what you can do.',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: skills.skills
+                        .map((s) => _SkillChip(
+                              skill: s,
+                              deleting:
+                                  skills.deletingId == s.id,
+                              onDelete: () =>
+                                  _deleteSkill(context, skills, s.id),
+                            ))
+                        .toList(),
+                  ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _skillController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: const InputDecoration(
+                          hintText: 'Add a skill (e.g. Plumbing)',
+                          isDense: true,
+                        ),
+                        onSubmitted: (_) => _addSkill(context),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    skills.isAdding
+                        ? const Padding(
+                            padding: EdgeInsets.all(8),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : IconButton(
+                            onPressed: () => _addSkill(context),
+                            icon: const Icon(Icons.add_circle_outline,
+                                color: AppConstants.primary),
+                          ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+
         // User details card.
         Card(
           elevation: 1,
@@ -209,6 +351,40 @@ class _InfoRow extends StatelessWidget {
       leading: Icon(icon, color: AppConstants.primary),
       title: Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
       subtitle: Text(value, style: const TextStyle(fontSize: 16)),
+    );
+  }
+}
+
+/// A single skill chip with a delete (✕) action.
+class _SkillChip extends StatelessWidget {
+  const _SkillChip({
+    required this.skill,
+    required this.onDelete,
+    this.deleting = false,
+  });
+
+  final UserSkillModel skill;
+  final VoidCallback onDelete;
+  final bool deleting;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(skill.skillName),
+      deleteIcon: deleting
+          ? const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.close, size: 16),
+      onDeleted: deleting ? null : onDelete,
+      backgroundColor: const Color(0x14129ACA),
+      deleteIconColor: Colors.black54,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+        side: const BorderSide(color: AppConstants.primary),
+      ),
     );
   }
 }
