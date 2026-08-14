@@ -67,6 +67,25 @@ namespace QuickWork.WebAPI.Controllers
             if (updatedJobPosting == null)
                 return NotFound();
 
+                        return updatedJobPosting;
+        }
+
+        /// <summary>
+        /// Transitions a job to a new status (Open -> InProgress -> Completed).
+        /// Only the job's owner may change its status.
+        /// </summary>
+        [HttpPut("{id}/status")]
+        public async Task<ActionResult<JobPostingResponse>> ChangeStatus(
+            int id,
+            [FromQuery] int postedByUserId,
+            [FromQuery] string status)
+        {
+            var updatedJobPosting =
+                await _jobPostingService.ChangeStatusAsync(id, postedByUserId, status);
+
+            if (updatedJobPosting == null)
+                return NotFound();
+
             return updatedJobPosting;
         }
 

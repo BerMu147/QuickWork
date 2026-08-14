@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using QuickWork.Model;
 using QuickWork.Model.Requests;
 using QuickWork.Model.Responses;
 using QuickWork.Model.SearchObjects;
@@ -179,8 +180,56 @@ namespace QuickWork.Services.Services
                 jobPosting.CompletedAt = DateTime.UtcNow;
             }
 
-            await _context.SaveChangesAsync();
+                        await _context.SaveChangesAsync();
             return await GetByIdAsync(jobPosting.Id);
+        }
+
+        /// <summary>
+        /// Transitions a job to a new status (e.g. Open -> InProgress -> Completed).
+        /// Only the job's owner may change its status. Invalid transitions or
+        /// unauthorized callers raise a <see cref="UserException"/>.
+        /// </summary>
+        public async Task<JobPostingResponse> ChangeStatusAsync(int id, int postedByUserId, string status)
+        {
+            var jobPosting = await _context.JobPostings.FindAsync(id);
+            if (jobPosting == null)
+            {
+                throw new UserException("Job posting not found.");
+            }
+
+            if (jobPosting.PostedByUserId != postedByUserId)
+            {
+                throw new UserException("Only the job publisher can change its status.");
+            }
+
+            var normalized = (status ?? string.Empty).Trim();
+
+            // Validate the transition.
+            var allowedTransitions = (jobPosting.Status, normalized) switch
+            {
+                ("Open", "InProgress") => true,
+                ("Open", "Cancelled") => true,
+                ("InProgress", "Completed") => true,
+                ("InProgress", "Cancelled") => true,
+                _ => false
+            };
+
+            if (!allowedTransitions)
+            {
+                throw new UserException(
+                    $"Cannot change job status from '{jobPosting.Status}' to '{normalized}'.");
+            }
+
+            jobPosting.Status = normalized;
+            jobPosting.UpdatedAt = DateTime.UtcNow;
+            if (normalized == "Completed")
+            {
+                jobPosting.CompletedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+            return await GetByIdAsync(jobPosting.Id)
+                ?? throw new UserException("Job posting not found.");
         }
 
         public async Task<bool> DeleteAsync(int id)
