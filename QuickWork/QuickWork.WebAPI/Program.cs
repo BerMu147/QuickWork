@@ -32,6 +32,7 @@ builder.Services.AddTransient<IMessageService, MessageService>();
 builder.Services.AddTransient<IReviewService, ReviewService>();
 builder.Services.AddTransient<IPaymentService, PaymentService>();
 builder.Services.AddTransient<INotificationService, NotificationService>();
+builder.Services.AddTransient<IUserSkillService, UserSkillService>();
 
 // JWT Token Helper
 builder.Services.AddSingleton<JwtTokenHelper>();

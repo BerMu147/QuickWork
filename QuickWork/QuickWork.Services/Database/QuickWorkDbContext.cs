@@ -22,6 +22,7 @@ namespace QuickWork.Services.Database
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<UserSkill> UserSkills { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -254,6 +255,16 @@ namespace QuickWork.Services.Database
                 .HasOne(n => n.User)
                 .WithMany()
                 .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure UserSkill entity
+            modelBuilder.Entity<UserSkill>()
+                .HasIndex(s => s.UserId);
+
+            modelBuilder.Entity<UserSkill>()
+                .HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Seed initial data
