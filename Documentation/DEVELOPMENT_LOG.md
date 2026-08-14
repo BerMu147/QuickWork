@@ -22,6 +22,8 @@ A live tracker of what's been built and what's next.
 | S8 | "My Jobs" tab | ✅ Done | Published jobs + applications |
 | S9 | Profile tab | ✅ Done | User info + edit |
 | Polish | Splash screen, README, search & filters | ✅ Done | Logo splash, README, + search screen |
+| Polish | Completed jobs counter | ✅ Done | Profile stat card; see detailed entry |
+| Polish | Job status lifecycle ("Mark as Complete") | ✅ Done | Publisher: Open → InProgress → Completed |
 
 ---
 
@@ -121,6 +123,8 @@ A live tracker of what's been built and what's next.
 - **✅ Search & filters** — dedicated `SearchJobScreen` (title keyword, category, city). A tappable search bar on the Jobs feed opens it; results reload the feed, with an active-filters chip + "clear filters". Reuses the backend's existing `JobPostingSearchObject` (no backend changes).
 - **✅ Publisher review / Accept–Reject** — added `ReviewApplicationsScreen` reachable by tapping a published job in "My Jobs → Published". Lists each candidate (avatar initials, name, email, message, applied date) with **Accept / Reject** buttons. Uses the existing `PUT /JobApplications/{id}` endpoint; statuses update live and any accepted/rejected applications remove their action buttons. Updated `JobPostingRepository` + `JobPostingProvider` accordingly.
 - **✅ Per-job messaging (publisher ↔ worker)** — in-app chat to coordinate job details without exposing contact info publicly. Added `MessageModel` / `MessageRepository` / `MessageProvider` + a `ConversationScreen` (chat bubbles, send box, auto-mark-incoming-as-read). Entry points: publisher → "Message" on an applicant in Review Applications; worker (logged in) → "Message the publisher" on the job detail page. Reuses the existing `MessagesController` (`POST/GET/PATCH mark-as-read`) — no backend changes.
+- **✅ Completed jobs counter** — the Profile tab now shows a **"Completed Jobs"** stat card under the user's name. `JobPostingProvider.completedJobsCount` = published jobs with status `Completed` + the user's applications with status `Accepted`. Frontend-only (no backend/schema changes); the profile auto-loads My Jobs data when opened.
+- **✅ Job status lifecycle ("Mark as Complete")** — published jobs could previously never leave `Open`, so the completed-jobs counter could never move. Added a **publisher-controlled workflow**: `Open → InProgress → Completed` (with a `Cancelled` path). Backend: new `ChangeStatusAsync` in `JobPostingService` (ownership check + transition validation, stamps `CompletedAt`) and endpoint **`PUT /JobPostings/{id}/status?postedByUserId=&status=`**. Frontend: `JobPostingRepository.updateJobStatus` + `JobPostingProvider.changeJobStatus`, and a **Job status card** on `ReviewApplicationsScreen` showing a color-coded badge with "Mark In Progress" / "Mark Complete" buttons. No schema/migration needed. **Requires a backend rebuild in VS.**
 
 ---
 
@@ -141,7 +145,7 @@ A live tracker of what's been built and what's next.
 - *(Note taken — open design question; not part of the core sub-steps.)*
 
 ### User Profile Additional Features
-- User can add custom skills so the publisher knows if it's related to something specific
-- User can add previous work experiences. Nothing too descriptive, just the indication of experience
-- User can leave the impression after finished job with publisher (worker<=>publisher) can be positive/negative/neutral
-- On User profile overview there should be a count of total completed jobs (will be relevant for additional features)
+- User can add custom skills so the publisher knows if it's related to something specific *(pending — needs new DB table, see next steps)*
+- User can add previous work experiences. Nothing too descriptive, just the indication of experience *(pending — needs new DB table)*
+- User can leave the impression after finished job with publisher (worker<=>publisher) can be positive/negative/neutral *(pending — backend `Review` service already exists; needs frontend wiring)*
+- ✅ **Done** — completed jobs count on the profile, plus the **"Mark as Complete"** workflow it depends on.
