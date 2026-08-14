@@ -24,6 +24,7 @@ A live tracker of what's been built and what's next.
 | Polish | Splash screen, README, search & filters | ✅ Done | Logo splash, README, + search screen |
 | Polish | Completed jobs counter | ✅ Done | Profile stat card; see detailed entry |
 | Polish | Job status lifecycle ("Mark as Complete") | ✅ Done | Publisher: Open → InProgress → Completed |
+| Polish | User custom skills | ✅ Done | Add/list/delete skills on Profile; see detailed entry |
 
 ---
 
@@ -126,6 +127,8 @@ A live tracker of what's been built and what's next.
 - **✅ Completed jobs counter** — the Profile tab now shows a **"Completed Jobs"** stat card under the user's name. `JobPostingProvider.completedJobsCount` = published jobs with status `Completed` + the user's applications with status `Accepted`. Frontend-only (no backend/schema changes); the profile auto-loads My Jobs data when opened.
 - **✅ Job status lifecycle ("Mark as Complete")** — published jobs could previously never leave `Open`, so the completed-jobs counter could never move. Added a **publisher-controlled workflow**: `Open → InProgress → Completed` (with a `Cancelled` path). Backend: new `ChangeStatusAsync` in `JobPostingService` (ownership check + transition validation, stamps `CompletedAt`) and endpoint **`PUT /JobPostings/{id}/status?postedByUserId=&status=`**. Frontend: `JobPostingRepository.updateJobStatus` + `JobPostingProvider.changeJobStatus`, and a **Job status card** on `ReviewApplicationsScreen` showing a color-coded badge with "Mark In Progress" / "Mark Complete" buttons. No schema/migration needed. **Requires a backend rebuild in VS.**
 
+- **✅ User custom skills** — users can add custom skills to their profile so publishers can gauge relevance; skills render as chips (with delete) and a text field to add new ones. Backend: new `UserSkill` entity + `DbSet`, `UserSkillService` (duplicate-name guard, ownership check on delete, `UserException` validation) and `UserSkillsController` (`GET`, `GET/{id}`, `POST`, `PUT/{id}`, `DELETE/{id}`). Frontend: `UserSkillModel` / `UserSkillRepository` / `SkillProvider` + a **Skills card** on `ProfileScreen`. **DB migration applied via VS** (`Add-Migration` + `Update-Database`, e.g. `AddUserSkill`) — the `UserSkill` table is now live in SQL Server with a `SkillName` column. Verified by `flutter analyze` (0 issues) + widget tests (adds/removes skills against a fake repo).
+
 ---
 
 ## Open Notes (Validated During Testing — For Polish Phase)
@@ -145,7 +148,7 @@ A live tracker of what's been built and what's next.
 - *(Note taken — open design question; not part of the core sub-steps.)*
 
 ### User Profile Additional Features
-- User can add custom skills so the publisher knows if it's related to something specific *(pending — needs new DB table, see next steps)*
+- ✅ **Done** — user custom skills (add/list/delete on Profile). Backend `UserSkill` table/service/controller + frontend `SkillProvider`/`SkillRepository`/Skills card. **`UserSkill` EF migration created & applied via VS** — the table is live in the DB with a `SkillName` column.
 - User can add previous work experiences. Nothing too descriptive, just the indication of experience *(pending — needs new DB table)*
 - User can leave the impression after finished job with publisher (worker<=>publisher) can be positive/negative/neutral *(pending — backend `Review` service already exists; needs frontend wiring)*
 - ✅ **Done** — completed jobs count on the profile, plus the **"Mark as Complete"** workflow it depends on.
