@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QuickWork.Services.Database;
 
@@ -11,9 +12,11 @@ using QuickWork.Services.Database;
 namespace QuickWork.Services.Migrations
 {
     [DbContext(typeof(QuickWorkDbContext))]
-    partial class QuickWorkDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260814185404_AddUserSkill")]
+    partial class AddUserSkill
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
