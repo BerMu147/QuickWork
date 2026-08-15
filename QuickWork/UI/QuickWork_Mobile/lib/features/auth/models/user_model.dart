@@ -11,6 +11,7 @@ class UserModel {
     this.picture,
     this.isActive = true,
     this.phoneNumber,
+    this.bio,
     required this.genderId,
     required this.genderName,
     required this.cityId,
@@ -26,6 +27,7 @@ class UserModel {
   final String? picture;
   final bool isActive;
   final String? phoneNumber;
+  final String? bio;
   final int genderId;
   final String genderName;
   final int cityId;
@@ -48,6 +50,7 @@ class UserModel {
       picture: json['picture'] as String?,
       isActive: json['isActive'] as bool? ?? true,
       phoneNumber: json['phoneNumber'] as String?,
+      bio: json['bio'] as String?,
       genderId: json['genderId'] as int? ?? 0,
       genderName: json['genderName'] as String? ?? '',
       cityId: json['cityId'] as int? ?? 0,
@@ -58,3 +61,4 @@ class UserModel {
     );
   }
 }
+

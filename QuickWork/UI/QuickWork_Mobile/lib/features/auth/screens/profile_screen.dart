@@ -164,6 +164,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ?.copyWith(color: Colors.grey[600]),
           ),
         ),
+        if (user.bio != null && user.bio!.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              user.bio!,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.grey[700],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
 
         // Completed jobs stat card.
@@ -189,6 +203,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : null,
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Work history card — lists platform-verified completed work
+        // (published jobs marked Completed + hired jobs accepted as a worker).
+        Card(
+          elevation: 1,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.work_history_outlined,
+                        color: AppConstants.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Work history',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (jobs.isLoadingMyJobs)
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _buildWorkHistory(jobs),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 24),
@@ -331,6 +382,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _divider() => const Divider(height: 1);
+
+  /// Builds the list of platform-verified "work history" items.
+  ///
+  /// Combines jobs the user **published** that were marked Completed with the
+  /// jobs they were **hired for** (accepted application). Each entry renders
+  /// the job title with a check icon.
+  Widget _buildWorkHistory(JobPostingProvider jobs) {
+    final items = <String>[];
+
+    // Published jobs marked Completed.
+    for (final j in jobs.myJobPostings) {
+      if (j.status.toLowerCase() == 'completed') {
+        items.add(j.title);
+      }
+    }
+
+    // Hired-for jobs (accepted applications) as a worker.
+    for (final a in jobs.myApplications) {
+      if (a.status.toLowerCase() == 'accepted') {
+        items.add(a.jobPostingTitle);
+      }
+    }
+
+    // De-duplicate while preserving order (a job could appear in both lists).
+    final unique = <String>[];
+    final seen = <String>{};
+    for (final t in items) {
+      if (seen.add(t)) unique.add(t);
+    }
+
+    if (unique.isEmpty) {
+      return Text(
+        'No completed work yet. Finish jobs to build your work history here.',
+        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+      );
+    }
+
+    return Column(
+      children: unique
+          .map((title) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_outline,
+                        size: 18, color: AppConstants.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(title,
+                          style: const TextStyle(fontSize: 14)),
+                    ),
+                  ],
+                ),
+              ))
+          .toList(),
+    );
+  }
 }
 
 /// A single info row (icon + label + value).

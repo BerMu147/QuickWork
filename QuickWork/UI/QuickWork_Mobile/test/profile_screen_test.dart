@@ -119,14 +119,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Test User'), findsOneWidget);
     expect(find.text('@testuser'), findsOneWidget);
+    // The completed-jobs, work-history and skills cards push the user-details
+    // card (email/phone/city/gender) below the test viewport, so scroll the
+    // profile ListView down to it before asserting. Pin the scrollable to the
+    // outer list (the skills TextField contributes another Scrollable).
+    await tester.scrollUntilVisible(
+      find.text('test@example.com'),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('test@example.com'), findsOneWidget);
     expect(find.text('061123456'), findsOneWidget);
     expect(find.text('Sarajevo'), findsOneWidget);
     expect(find.text('Male'), findsOneWidget);
-    // The added completed-jobs + skills cards push the edit button below the
-    // test viewport, so scroll down to it before asserting. Pin the scrollable
-    // to the profile ListView (the skills TextField also contributes a
-    // Scrollable, so `.first` here is the outer list).
+    // The edit button is still below the viewport, so keep scrolling down to
+    // it before asserting.
     await tester.scrollUntilVisible(
       find.text('Edit profile'),
       100,

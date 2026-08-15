@@ -8,6 +8,7 @@ class UserUpdateRequest {
     required this.genderId,
     required this.cityId,
     this.phoneNumber,
+    this.bio,
     this.picture,
     required this.isActive,
     this.roleIds = const [],
@@ -20,6 +21,7 @@ class UserUpdateRequest {
   final int genderId;
   final int cityId;
   final String? phoneNumber;
+  final String? bio;
   final List<int>? picture; // byte[] (image) — kept null for now.
   final bool isActive;
   final List<int> roleIds;
@@ -33,9 +35,11 @@ class UserUpdateRequest {
       'genderId': genderId,
       'cityId': cityId,
       'phoneNumber': phoneNumber,
+      'bio': bio,
       'picture': picture,
       'isActive': isActive,
       'roleIds': roleIds,
     };
   }
 }
+

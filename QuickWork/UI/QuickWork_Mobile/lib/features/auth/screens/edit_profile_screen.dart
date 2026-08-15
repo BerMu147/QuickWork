@@ -24,6 +24,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _bioController = TextEditingController();
 
   int? _genderId;
   int? _cityId;
@@ -46,6 +47,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _lastNameController.text = user.lastName;
       _emailController.text = user.email;
       _phoneController.text = user.phoneNumber ?? '';
+      _bioController.text = user.bio ?? '';
       _genderId = user.genderId;
       _cityId = user.cityId;
 
@@ -64,6 +66,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _bioController.dispose();
     super.dispose();
   }
 
@@ -88,6 +91,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       cityId: _cityId ?? user.cityId,
       phoneNumber:
           _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+      bio: _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
       isActive: user.isActive,
       roleIds: user.roles.map((r) => r.id).toList(),
     );
@@ -180,6 +184,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Phone (optional)',
                         prefixIcon: Icon(Icons.phone_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _bioController,
+                      maxLines: 3,
+                      maxLength: 500,
+                      decoration: const InputDecoration(
+                        labelText: 'Bio (optional)',
+                        hintText:
+                            'Tell people about your experience or work interests.',
+                        alignLabelWithHint: true,
+                        prefixIcon: Icon(Icons.notes_outlined),
                       ),
                     ),
                     const SizedBox(height: 12),
