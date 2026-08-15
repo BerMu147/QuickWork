@@ -143,6 +143,7 @@ namespace QuickWork.Services.Services
                 Email = request.Email,
                 Username = request.Username,
                 PhoneNumber = request.PhoneNumber,
+                Bio = request.Bio,
                 GenderId = request.GenderId,
                 CityId = request.CityId,
                 IsActive = request.IsActive,
@@ -205,6 +206,7 @@ namespace QuickWork.Services.Services
             user.Email = request.Email;
             user.Username = request.Username;
             user.PhoneNumber = request.PhoneNumber;
+            user.Bio = request.Bio;
             user.GenderId = request.GenderId;
             user.CityId = request.CityId;
             user.IsActive = request.IsActive;
@@ -265,6 +267,7 @@ namespace QuickWork.Services.Services
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
                 PhoneNumber = user.PhoneNumber,
+                Bio = user.Bio,
                 GenderId = user.GenderId,
                 GenderName = user.Gender?.Name ?? string.Empty,
                 CityId = user.CityId,

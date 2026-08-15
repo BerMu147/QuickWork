@@ -42,6 +42,13 @@ namespace QuickWork.Services.Database
         [MaxLength(20)]
         public string? PhoneNumber { get; set; }
         
+        /// <summary>
+        /// Free-form self-description the user writes (e.g. an experience or
+        /// bio blurb) shown on their profile. Optional.
+        /// </summary>
+        [MaxLength(500)]
+        public string? Bio { get; set; }
+
         // Foreign keys for Gender and City
         public int GenderId { get; set; }
         public int CityId { get; set; }
@@ -49,7 +56,7 @@ namespace QuickWork.Services.Database
         // Navigation properties
         public Gender Gender { get; set; } = null!;
         public City City { get; set; } = null!;
-        
+
         // Navigation property for the many-to-many relationship with Role
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     }

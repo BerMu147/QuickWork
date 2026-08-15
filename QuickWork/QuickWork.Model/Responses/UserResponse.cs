@@ -16,6 +16,7 @@ namespace QuickWork.Model.Responses
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public string? PhoneNumber { get; set; }
+        public string? Bio { get; set; }
         
         // Gender and City information
         public int GenderId { get; set; }

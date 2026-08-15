@@ -28,6 +28,9 @@ namespace QuickWork.Model.Requests
         [MaxLength(20)]
         public string? PhoneNumber { get; set; }
         
+                [MaxLength(500)]
+        public string? Bio { get; set; }
+        
         [Required]
         public int GenderId { get; set; }
         
@@ -35,7 +38,7 @@ namespace QuickWork.Model.Requests
         public int CityId { get; set; }
         
         public bool IsActive { get; set; } = true;
-        
+
         // Only used when creating a new user
         [MinLength(4)]
         public string? Password { get; set; }
