@@ -116,6 +116,7 @@ A live tracker of what's been built and what's next.
 
 ## To Be Aware Of (Future / Polish)
 - **Welcome email** on registration — config target `quickworkberinm@gmail.com` in `EmailSenderService.cs`.
+- **Push notifications** — **parked as a later / production feature.** See `Documentation/PUSH_NOTIFICATIONS_DESIGN.md` for the full design (FCM + RabbitMQ + DeviceTokens). Plan is: in-app notifications bell first (reuses existing `NotificationsController`, no backend change), then true push after Desktop ships.
 - **Opening animation video** (`QuickWork/Assets/QuickWork Load Video.mp4`) — considered but **not** wired in; the app uses a lightweight first-launch logo splash instead to keep startup fast and smooth.
 - Remove self-signed cert handling before production.
 - Job descriptions may have diacritics/encoding quirks in existing seed data.
