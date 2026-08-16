@@ -146,6 +146,20 @@ class JobPostingProvider extends ChangeNotifier {
   bool ownsJob(int jobPostingId) =>
       _myJobPostings.any((j) => j.id == jobPostingId);
 
+  /// Clears the cached job-posting and application data that belongs to a given
+  /// user. Called on logout so one account's "my jobs"/applications never leak
+  /// into another account's session.
+  void clear() {
+    _jobPostings = [];
+    _myJobPostings = [];
+    _myApplications = [];
+    _error = null;
+    _applicationError = null;
+    _publishError = null;
+    _statusError = null;
+    notifyListeners();
+  }
+
   /// Loads the jobs the user has published plus their applications.
   ///
   /// Used to populate the "My Jobs" tab.

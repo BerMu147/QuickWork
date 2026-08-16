@@ -22,6 +22,14 @@ class MessageProvider extends ChangeNotifier {
   bool get isSending => _isSending;
   String? get error => _error;
 
+  /// Clears the current conversation thread so a subsequent [loadThread]
+  /// starts fresh (used when switching users on logout).
+  void clear() {
+    _messages = [];
+    _error = null;
+    notifyListeners();
+  }
+
   /// Loads the thread for a job between [myUserId] and [otherUserId].
   Future<void> loadThread({
     required int jobPostingId,

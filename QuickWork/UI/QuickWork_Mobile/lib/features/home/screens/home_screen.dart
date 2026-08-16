@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/providers/auth_provider.dart';
+import '../../auth/providers/skill_provider.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../auth/screens/profile_screen.dart';
+import '../../jobs/providers/job_posting_provider.dart';
+import '../../jobs/providers/message_provider.dart';
 import '../../jobs/screens/jobs_screen.dart';
 import '../../jobs/screens/my_jobs_screen.dart';
 import '../../jobs/screens/publish_job_screen.dart';
+import '../../reviews/providers/review_provider.dart';
 
 /// Main shell of the app. Reachable by everyone — no login required.
 ///
@@ -39,8 +43,15 @@ class _HomeScreenState extends State<HomeScreen> {
             PopupMenuButton<String>(
               tooltip: 'Account',
               offset: const Offset(0, 50),
-              onSelected: (value) async {
+                            onSelected: (value) async {
                 if (value == 'logout') {
+                  // Clear per-user provider state before logging out so one
+                  // account's skills/jobs/reviews/messages never leak into the
+                  // next account that logs in.
+                  context.read<SkillProvider>().clear();
+                  context.read<JobPostingProvider>().clear();
+                  context.read<ReviewProvider>().clear();
+                  context.read<MessageProvider>().clear();
                   await context.read<AuthProvider>().logout();
                 }
               },

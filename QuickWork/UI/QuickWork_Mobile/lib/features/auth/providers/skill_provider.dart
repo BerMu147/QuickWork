@@ -68,6 +68,15 @@ class SkillProvider extends ChangeNotifier {
     }
   }
 
+  /// Clears the cached skills so a subsequent [loadSkills] starts fresh. Used
+  /// when switching users (e.g. on logout) so one account's skills never leak
+  /// into another account's profile.
+  void clear() {
+    _skills = [];
+    _error = null;
+    notifyListeners();
+  }
+
   /// Deletes a skill by its [id]. Returns true on success, false on failure
   /// (error stored in [error]).
   Future<bool> deleteSkill({
