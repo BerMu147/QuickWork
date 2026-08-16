@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../auth/screens/applicant_profile_screen.dart';
 import '../../reviews/providers/review_provider.dart';
 import '../../reviews/screens/review_form_screen.dart';
 import '../models/job_application_model.dart';
@@ -111,6 +112,20 @@ class _ReviewApplicationsScreenState extends State<ReviewApplicationsScreen> {
           jobTitle: widget.job.title,
           otherUserId: app.applicantUserId,
           otherUserName: app.applicantUserName,
+        ),
+      ),
+    );
+  }
+
+  /// Opens a read-only profile view of the applicant. The applicant screen
+  /// loads the target user's own data locally, so it never touches the
+  /// signed-in publisher's shared SkillProvider / ReviewProvider.
+  void _openApplicantProfile(JobApplicationModel app) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ApplicantProfileScreen(
+          userId: app.applicantUserId,
+          userName: app.applicantUserName,
         ),
       ),
     );
@@ -282,6 +297,7 @@ class _ReviewApplicationsScreenState extends State<ReviewApplicationsScreen> {
                     return _ApplicationTile(
                       application: app,
                       isUpdating: _updatingId == app.id,
+                      onViewProfile: () => _openApplicantProfile(app),
                       onAccept: () => _setStatus(app, 'Accepted'),
                       onReject: () => _setStatus(app, 'Rejected'),
                       onMessage: () => _openConversation(app),
@@ -301,6 +317,7 @@ class _ApplicationTile extends StatelessWidget {
   const _ApplicationTile({
     required this.application,
     required this.isUpdating,
+    required this.onViewProfile,
     required this.onAccept,
     required this.onReject,
     required this.onMessage,
@@ -310,6 +327,7 @@ class _ApplicationTile extends StatelessWidget {
 
   final JobApplicationModel application;
   final bool isUpdating;
+  final VoidCallback onViewProfile;
   final VoidCallback onAccept;
   final VoidCallback onReject;
   final VoidCallback onMessage;
@@ -335,34 +353,47 @@ class _ApplicationTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppConstants.primary,
-                  child: Text(
-                    _initials(application.applicantUserName),
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        application.applicantUserName,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+            InkWell(
+              onTap: onViewProfile,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: AppConstants.primary,
+                      child: Text(
+                        _initials(application.applicantUserName),
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 13),
                       ),
-                      Text(
-                        application.applicantUserEmail,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            application.applicantUserName,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            application.applicantUserEmail,
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[600]),
+                          ),
+                        ],
                       ),
-                    ],
                   ),
+                    const Icon(Icons.chevron_right,
+                        size: 20, color: AppConstants.primary),
+                    const SizedBox(width: 4),
+                    _StatusBadge(status: application.status),
+                  ],
                 ),
-                _StatusBadge(status: application.status),
-              ],
+              ),
             ),
             if (application.message?.isNotEmpty == true) ...[
               const SizedBox(height: 10),
