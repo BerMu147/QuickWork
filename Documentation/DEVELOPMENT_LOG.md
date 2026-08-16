@@ -25,6 +25,8 @@ A live tracker of what's been built and what's next.
 | Polish | Completed jobs counter | ✅ Done | Profile stat card; see detailed entry |
 | Polish | Job status lifecycle ("Mark as Complete") | ✅ Done | Publisher: Open → InProgress → Completed |
 | Polish | User custom skills | ✅ Done | Add/list/delete skills on Profile; see detailed entry |
+| Polish | Work experience (Bio + work history) | ✅ Done | Profile Bio field + verified "Work history" card; see detailed entry |
+| Polish | Reviews & rating | ✅ Done | Publisher⇄worker reviews + Profile rating card; see detailed entry |
 
 ---
 
@@ -128,6 +130,17 @@ A live tracker of what's been built and what's next.
 - **✅ Job status lifecycle ("Mark as Complete")** — published jobs could previously never leave `Open`, so the completed-jobs counter could never move. Added a **publisher-controlled workflow**: `Open → InProgress → Completed` (with a `Cancelled` path). Backend: new `ChangeStatusAsync` in `JobPostingService` (ownership check + transition validation, stamps `CompletedAt`) and endpoint **`PUT /JobPostings/{id}/status?postedByUserId=&status=`**. Frontend: `JobPostingRepository.updateJobStatus` + `JobPostingProvider.changeJobStatus`, and a **Job status card** on `ReviewApplicationsScreen` showing a color-coded badge with "Mark In Progress" / "Mark Complete" buttons. No schema/migration needed. **Requires a backend rebuild in VS.**
 
 - **✅ User custom skills** — users can add custom skills to their profile so publishers can gauge relevance; skills render as chips (with delete) and a text field to add new ones. Backend: new `UserSkill` entity + `DbSet`, `UserSkillService` (duplicate-name guard, ownership check on delete, `UserException` validation) and `UserSkillsController` (`GET`, `GET/{id}`, `POST`, `PUT/{id}`, `DELETE/{id}`). Frontend: `UserSkillModel` / `UserSkillRepository` / `SkillProvider` + a **Skills card** on `ProfileScreen`. **DB migration applied via VS** (`Add-Migration` + `Update-Database`, e.g. `AddUserSkill`) — the `UserSkill` table is now live in SQL Server with a `SkillName` column. Verified by `flutter analyze` (0 issues) + widget tests (adds/removes skills against a fake repo).
+- **✅ Work experience (Bio + verified work history)** — implemented as a searchable-free-text **"Bio"** plus a **platform-verified "Work history"** card (kept intentionally simple instead of a fabricated CV table).
+  - **Bio (self-described):** new nullable `Bio` column (`MaxLength(500)`) on `Users`, wired through `UserUpsertRequest` / `UserResponse` / `UserService` (create/update/map). **DB migration applied via VS** (`AddMigration AddBioUser` → `Update-Database`) — the `Bio` column is live in `dbo.Users`. Frontend: a multiline **"Bio (optional)"** field on `EditProfileScreen` and italic display under the username on `ProfileScreen`.
+  - **Work history (platform-verified, no schema):** a **"Work history"** card on the Profile listing — with a check icon each — published jobs marked `Completed` plus the user's accepted applications as a worker (de-duplicated, ordered); shows an empty state when none. Reuses `JobPostingProvider`'s My Jobs data (same definition as the completed-jobs counter).
+    - **Tests:** `test/profile_screen_test.dart` updated to scroll to the user-details rows (the new card pushes them below the default test viewport). `flutter analyze` (0 issues) + widget tests pass.
+
+- **✅ Reviews & rating (publisher ⇄ worker)** — after a job is **Completed**, either party can review the other, and every user's Profile shows their **average rating** and the reviews they've received.
+  - **Review form:** a reusable `ReviewFormScreen` (modal bottom sheet) with a 1–5 **star picker**, optional comment, live submitting/error state. New `ReviewProvider` (`reviews`, `averageRating`, `isLoading`, `isSubmitting`, `submitError`, `hasReviewed`) wired through the existing backend `Review` service (no backend changes needed).
+  - **Publisher → worker:** on `ReviewApplicationsScreen`, an **accepted worker of a Completed job** gets a **"Review"** button (switches to a disabled "Reviewed" badge once submitted).
+  - **Worker → publisher:** on the job detail page, a hired worker (accepted application) of a **Completed** job gets a **"Review the publisher"** button (→ "You reviewed the publisher").
+  - **Profile card:** a **"Reviews & rating"** card under the work history shows the average rating as stars + the received reviews (reviewer name, per-review stars, job title, comment), loaded via `ReviewProvider.loadForUser`. Reuses `ReviewProvider` added at the app root.
+  - **Tests:** fixed tests that build tab/Profile screens (added `ReviewProvider` to `HomeScreen`, `ProfileScreen`, and `ReviewApplicationsScreen` providers); added `test/reviews_feature_test.dart` (profile rating, publisher review action/submission, no-review-on-open, review form). `flutter analyze` (0 issues) + widget tests pass.
 
 ---
 
@@ -149,6 +162,6 @@ A live tracker of what's been built and what's next.
 
 ### User Profile Additional Features
 - ✅ **Done** — user custom skills (add/list/delete on Profile). Backend `UserSkill` table/service/controller + frontend `SkillProvider`/`SkillRepository`/Skills card. **`UserSkill` EF migration created & applied via VS** — the table is live in the DB with a `SkillName` column.
-- User can add previous work experiences. Nothing too descriptive, just the indication of experience *(pending — needs new DB table)*
-- User can leave the impression after finished job with publisher (worker<=>publisher) can be positive/negative/neutral *(pending — backend `Review` service already exists; needs frontend wiring)*
+- User can add previous work experiences. Nothing too descriptive, just the indication of experience — **✅ Done** — implemented as a **"Bio"** free-text field (self-described experience) + a **platform-verified "Work history"** card (completed jobs). See the Polish Progress entry above.
+- User can leave the impression after finished job with publisher (worker<=>publisher) can be positive/negative/neutral — **✅ Done** — the backend `Review` service is now wired to the frontend: a `ReviewFormScreen` (star rating + comment) launched from an accepted worker's tile (publisher→worker) and from the job detail page (worker→publisher) once a job is **Completed**; users see their average rating + reviews on Profile. See the Polish Progress entry above. *(Currently a fixed 1–5 star rating is used rather than separate positive/negative/neutral sentiment.)*
 - ✅ **Done** — completed jobs count on the profile, plus the **"Mark as Complete"** workflow it depends on.
