@@ -27,6 +27,9 @@ A live tracker of what's been built and what's next.
 | Polish | User custom skills | ✅ Done | Add/list/delete skills on Profile; see detailed entry |
 | Polish | Work experience (Bio + work history) | ✅ Done | Profile Bio field + verified "Work history" card; see detailed entry |
 | Polish | Reviews & rating | ✅ Done | Publisher⇄worker reviews + Profile rating card; see detailed entry |
+| Bugfix | Applicant profile preview | ✅ Done | Tappable applicant → read-only profile (no shared-provider clobber) |
+| Bugfix | Clear per-user state on logout | ✅ Done | Fixes skills/reviews/jobs bleed across accounts |
+| Bugfix | Reviews: aggregate average + separate page | ✅ Done | Profile summary + "See reviews" → dedicated reviews list |
 
 ---
 
@@ -140,7 +143,36 @@ A live tracker of what's been built and what's next.
   - **Publisher → worker:** on `ReviewApplicationsScreen`, an **accepted worker of a Completed job** gets a **"Review"** button (switches to a disabled "Reviewed" badge once submitted).
   - **Worker → publisher:** on the job detail page, a hired worker (accepted application) of a **Completed** job gets a **"Review the publisher"** button (→ "You reviewed the publisher").
   - **Profile card:** a **"Reviews & rating"** card under the work history shows the average rating as stars + the received reviews (reviewer name, per-review stars, job title, comment), loaded via `ReviewProvider.loadForUser`. Reuses `ReviewProvider` added at the app root.
-  - **Tests:** fixed tests that build tab/Profile screens (added `ReviewProvider` to `HomeScreen`, `ProfileScreen`, and `ReviewApplicationsScreen` providers); added `test/reviews_feature_test.dart` (profile rating, publisher review action/submission, no-review-on-open, review form). `flutter analyze` (0 issues) + widget tests pass.
+    - **Tests:** fixed tests that build tab/Profile screens (added `ReviewProvider` to `HomeScreen`, `ProfileScreen`, and `ReviewApplicationsScreen` providers); added `test/reviews_feature_test.dart` (profile rating, publisher review action/submission, no-review-on-open, review form). `flutter analyze` (0 issues) + widget tests pass.
+
+---
+
+## Pre-Desktop Bugfixes (done — Mobile app)
+
+Three user-reported bugs were fixed in the Mobile app (`QuickWork/UI/QuickWork_Mobile/`) before starting the Desktop phase. **None required a backend rebuild or migration** (the backend filtering was already correct).
+
+### ✅ Bugfix 1 — Publisher cannot view an applicant's profile overview
+- Added a **tappable applicant tile** on `ReviewApplicationsScreen` (the avatar/name row, with a chevron affordance) that navigates to a new **`ApplicantProfileScreen`**.
+- That screen is a **self-contained, read-only** view — it loads the **applicant's own data locally** via the repositories (`fetchUser`, `fetchSkillsForUser`, `fetchReviewsForUser`, `fetchAverageRating`, `fetchJobsForUser`, `fetchApplicationsForUser`) and **never mutates** the logged-in user's shared `SkillProvider`/`ReviewProvider`.
+- Shows: name, username, bio, city, custom skills, average rating + received reviews, and a platform-verified completed-jobs count.
+- Accepts optional repository injection for testability (defaults to real repos).
+- **Tests:** `test/applicant_profile_screen_test.dart` (tap name opens profile; profile shows the applicant's data, not the viewer's).
+
+### ✅ Bugfix 2 — Skills bleed across accounts (stale shared provider)
+- **Root cause:** `SkillProvider` was created once at the app root and never cleared on logout, so one account's skills persisted into the next account's session.
+- **Fix (clear-on-logout, approach 1):** added a `clear()` method to `SkillProvider`, `JobPostingProvider`, and `MessageProvider` (`ReviewProvider.clear()` already existed), and wired all four into the **logout handler in `home_screen.dart`** (the single logout call site) *before* `AuthProvider.logout()`.
+- `JobPostingProvider.clear()` also resets the error/status message fields so no stale UI state persists.
+- **Tests:** `test/auth_clear_on_logout_test.dart` (log in as user A, add skills, log out via the UI popup, assert shared `SkillProvider` is emptied so a subsequent account can't see A's skills).
+
+### ✅ Bugfix 3 — Reviews: aggregate average + separate reviews page (UI change only)
+- **Root cause:** the Profile `_buildReviews` rendered every received review inline on the card, and `ReviewProvider.clear()` was not wired on logout (same cross-user risk as Bugfix 2 — now covered by Bugfix 2's clear-on-logout).
+- **Fix**
+  1. Profile "Reviews & rating" card now shows a **single aggregate average rating** (stars + "N reviews" count) — no inline history.
+  2. Beneath the average, a **"See reviews" button** (disabled when no reviews) opens a new **`ReviewsScreen`** page listing each received review individually (reviewer name, per-review stars, job title, comment).
+  3. Clear-on-logout applied (see Bugfix 2).
+- **Tests:** new `test/reviews_screen_test.dart` (empty state + individual review listing + aggregate average); updated `test/reviews_feature_test.dart` (profile shows aggregate only, then navigates to the dedicated page for the individual reviewers).
+
+**All three bugfixes:** `flutter analyze` → 0 issues; offline widget tests pass, no backend rebuild/migration required.
 
 ---
 
