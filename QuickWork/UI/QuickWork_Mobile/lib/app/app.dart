@@ -8,6 +8,7 @@ import '../features/home/screens/home_screen.dart';
 import '../features/jobs/providers/job_posting_provider.dart';
 import '../features/jobs/providers/message_provider.dart';
 import '../features/lookup/providers/lookup_provider.dart';
+import '../features/reviews/providers/review_provider.dart';
 import '../features/splash/screens/splash_screen.dart';
 
 /// Root widget of the QuickWork mobile application.
@@ -38,6 +39,8 @@ class QuickWorkApp extends StatelessWidget {
         ),
         // Per-job conversation threads (stock provider, no config needed).
         ChangeNotifierProvider<MessageProvider>(create: (_) => MessageProvider()),
+        // User reviews & average rating (per-profile; no config needed).
+        ChangeNotifierProvider<ReviewProvider>(create: (_) => ReviewProvider()),
       ],
       child: MaterialApp(
         title: 'QuickWork',

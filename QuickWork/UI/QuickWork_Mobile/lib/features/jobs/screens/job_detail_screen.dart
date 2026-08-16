@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/login_screen.dart';
+import '../../reviews/providers/review_provider.dart';
+import '../../reviews/screens/review_form_screen.dart';
 import '../models/job_application_model.dart';
 import '../providers/job_posting_provider.dart';
 import 'conversation_screen.dart';
@@ -79,6 +81,64 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
         const SnackBar(content: Text('Application submitted successfully!')),
       );
     }
+  }
+
+  /// Whether the current user (as a hired worker) can review the publisher:
+  /// the job is completed and this worker's application was accepted.
+  bool get _canReviewPublisher {
+    final job = context.read<JobPostingProvider>().byId(widget.jobId);
+    if (job == null) return false;
+    return job.status.toLowerCase() == 'completed' &&
+        _myApplication?.status == 'Accepted';
+  }
+
+  /// Opens the review form so a hired worker can rate the publisher of a
+  /// completed job.
+  Future<void> _openReview() async {
+    final auth = context.read<AuthProvider>();
+    final job = context.read<JobPostingProvider>().byId(widget.jobId);
+    if (auth.user == null || job == null) return;
+
+    final reviewerId = auth.user!.id;
+    final reviewerName = auth.user!.fullName;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Consumer<ReviewProvider>(
+        builder: (sheetContext, reviewProvider, _) => ReviewFormScreen(
+          reviewerName: reviewerName,
+          reviewedName: job.postedByUserName,
+          jobTitle: job.title,
+          submitting: reviewProvider.isSubmitting,
+          error: reviewProvider.submitError,
+          onSubmit: (rating, comment) async {
+            final ok = await reviewProvider.submitReview(
+              reviewerUserId: reviewerId,
+              reviewedUserId: job.postedByUserId,
+              jobPostingId: job.id,
+              rating: rating,
+              comment: comment,
+            );
+            if (ok && sheetContext.mounted) {
+              Navigator.of(sheetContext).pop(true);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content:
+                        Text('Review for ${job.postedByUserName} submitted!'),
+                  ),
+                );
+              }
+            }
+        },
+        ),
+      ),
+    );
   }
 
   @override
@@ -221,6 +281,40 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                           width: double.infinity,
                           child: _buildApplyButton(auth, provider, isOwner),
                         ),
+                        if (auth.isAuthenticated &&
+                            !isOwner &&
+                            _canReviewPublisher) ...[
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: Consumer<ReviewProvider>(
+                              builder: (context, reviewProvider, _) {
+                                final reviewed = reviewProvider.hasReviewed(
+                                  reviewerUserId: auth.user?.id ?? 0,
+                                  jobPostingId: job.id,
+                                );
+                                if (reviewed) {
+                                  return OutlinedButton.icon(
+                                    onPressed: null,
+                                    icon: const Icon(
+                                        Icons.check_circle_outline,
+                                        color: Colors.green),
+                                    label:
+                                        const Text('You reviewed the publisher'),
+                                  );
+                                }
+                                return FilledButton.icon(
+                                  onPressed: _openReview,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Colors.amber.shade700,
+                                  ),
+                                  icon: const Icon(Icons.star_outline),
+                                  label: const Text('Review the publisher'),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                         if (auth.isAuthenticated &&
                             !isOwner) ...[
                           const SizedBox(height: 8),

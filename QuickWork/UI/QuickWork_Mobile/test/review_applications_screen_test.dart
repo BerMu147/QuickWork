@@ -11,6 +11,9 @@ import 'package:quickwork_mobile/features/jobs/models/job_application_model.dart
 import 'package:quickwork_mobile/features/jobs/models/job_posting_model.dart';
 import 'package:quickwork_mobile/features/jobs/providers/job_posting_provider.dart';
 import 'package:quickwork_mobile/features/jobs/screens/review_applications_screen.dart';
+import 'package:quickwork_mobile/features/reviews/data/review_repository.dart';
+import 'package:quickwork_mobile/features/reviews/models/review_model.dart';
+import 'package:quickwork_mobile/features/reviews/providers/review_provider.dart';
 
 class _FakeRepo extends JobPostingRepository {
   _FakeRepo(this._apps);
@@ -75,6 +78,49 @@ class _FakeRepo extends JobPostingRepository {
   }
 }
 
+/// In-memory fake for the reviews repository (no live backend).
+class _FakeReviewRepository extends ReviewRepository {
+  final List<ReviewModel> _reviews = [];
+
+  @override
+  Future<List<ReviewModel>> fetchReviewsForUser(int userId) async =>
+      List.of(_reviews);
+
+  @override
+  Future<double> fetchAverageRating(int userId) async {
+    if (_reviews.isEmpty) return 0;
+    final sum = _reviews.fold<int>(0, (acc, r) => acc + r.rating);
+    return sum / _reviews.length;
+  }
+
+  @override
+  Future<ReviewModel> createReview({
+    required int reviewerUserId,
+    required int reviewedUserId,
+    required int jobPostingId,
+    required int rating,
+    String? comment,
+  }) async {
+    final review = ReviewModel(
+      id: _reviews.length + 1,
+      jobPostingId: jobPostingId,
+      jobPostingTitle: _job.title,
+      reviewerUserId: reviewerUserId,
+      reviewerUserName: 'Test User',
+      reviewedUserId: reviewedUserId,
+      reviewedUserName: 'Jane D.',
+      rating: rating,
+      comment: comment,
+    );
+    _reviews.add(review);
+    return review;
+  }
+}
+
+final ReviewProvider _reviewProvider = ReviewProvider(
+  repository: _FakeReviewRepository(),
+);
+
 final _job = JobPostingModel.fromJson(const {
   'id': 1,
   'title': 'Fix the roof',
@@ -114,7 +160,9 @@ void main() {
 
     await tester.pumpWidget(MultiProvider(
       providers: [
+        ChangeNotifierProvider<AuthProvider>.value(value: AuthProvider()),
         ChangeNotifierProvider<JobPostingProvider>.value(value: provider),
+        ChangeNotifierProvider<ReviewProvider>.value(value: _reviewProvider),
       ],
       child: MaterialApp(home: ReviewApplicationsScreen(job: _job)),
     ));
@@ -154,6 +202,7 @@ void main() {
       providers: [
         ChangeNotifierProvider<AuthProvider>.value(value: AuthProvider()),
         ChangeNotifierProvider<JobPostingProvider>.value(value: provider),
+        ChangeNotifierProvider<ReviewProvider>.value(value: _reviewProvider),
       ],
       child: MaterialApp(home: ReviewApplicationsScreen(job: _job)),
     ));

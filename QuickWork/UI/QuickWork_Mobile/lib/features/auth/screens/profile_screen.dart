@@ -7,6 +7,8 @@ import '../../jobs/providers/job_posting_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/skill_provider.dart';
 import '../../auth/screens/login_screen.dart';
+import '../../reviews/models/review_model.dart';
+import '../../reviews/providers/review_provider.dart';
 import 'edit_profile_screen.dart';
 
 /// The "Profile" tab — shows the logged-in user's information.
@@ -31,9 +33,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final auth = context.read<AuthProvider>();
       final jobProvider = context.read<JobPostingProvider>();
       final skillProvider = context.read<SkillProvider>();
+      final reviewProvider = context.read<ReviewProvider>();
       if (auth.user != null) {
         jobProvider.loadMyJobs(auth.user!.id);
         skillProvider.loadSkills(auth.user!.id);
+        reviewProvider.loadForUser(auth.user!.id);
       }
     });
   }
@@ -93,6 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final auth = context.watch<AuthProvider>();
     final jobs = context.watch<JobPostingProvider>();
     final skills = context.watch<SkillProvider>();
+    final reviews = context.watch<ReviewProvider>();
     final theme = Theme.of(context);
 
     if (!auth.isAuthenticated) {
@@ -238,6 +243,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 8),
                 _buildWorkHistory(jobs),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Reviews & rating card — shows the average rating the user has
+        // received and the individual reviews left for them.
+        Card(
+          elevation: 1,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.star_outline,
+                        color: AppConstants.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Reviews & rating',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (reviews.isLoading)
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _buildReviews(reviews),
               ],
             ),
           ),
@@ -437,6 +479,138 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ))
           .toList(),
     );
+  }
+
+  /// Builds the "Reviews & rating" content: the average rating as stars plus
+  /// the list of reviews the user has received.
+  Widget _buildReviews(ReviewProvider reviews) {
+    // Average rating row.
+    final average = reviews.averageRating;
+    final hasReviews = reviews.reviews.isNotEmpty;
+
+    final ratingRow = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ...List.generate(5, (i) {
+          final filled = average >= i + 1;
+          return Icon(
+            filled ? Icons.star_rounded : Icons.star_border_rounded,
+            color: filled ? Colors.amber.shade700 : Colors.grey[400],
+            size: 30,
+          );
+        }),
+        const SizedBox(width: 12),
+        Text(
+          average.toStringAsFixed(1),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppConstants.primary,
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+      ],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ratingRow,
+        const SizedBox(height: 4),
+        Center(
+          child: Text(
+            hasReviews
+                ? '${reviews.reviews.length} '
+                    '${reviews.reviews.length == 1 ? 'review' : 'reviews'}'
+                : 'No reviews yet',
+            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+          ),
+        ),
+        if (hasReviews) ...[
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 4),
+          ...reviews.reviews.map((r) => _ReviewTile(review: r)),
+        ],
+      ],
+    );
+  }
+
+  ThemeData get theme => Theme.of(context);
+}
+
+/// A single review received by the user: reviewer name, star rating, comment
+/// and the job it relates to.
+class _ReviewTile extends StatelessWidget {
+  const _ReviewTile({required this.review});
+
+  final ReviewModel review;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: AppConstants.primary,
+                child: Text(
+                  _initials(review.reviewerUserName),
+                  style: const TextStyle(color: Colors.white, fontSize: 11),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      review.reviewerUserName,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      review.jobPostingTitle,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(5, (i) {
+                  final filled = review.rating >= i + 1;
+                  return Icon(
+                    filled ? Icons.star_rounded : Icons.star_border_rounded,
+                    size: 14,
+                    color: filled ? Colors.amber.shade700 : Colors.grey[400],
+                  );
+                }),
+              ),
+            ],
+          ),
+          if (review.comment?.isNotEmpty == true) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 38),
+              child: Text(
+                review.comment!,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    final first = parts.isNotEmpty && parts[0].isNotEmpty ? parts[0][0] : '';
+    final last = parts.length > 1 && parts[1].isNotEmpty ? parts[1][0] : '';
+    return '$first$last'.toUpperCase();
   }
 }
 

@@ -15,6 +15,9 @@ import 'package:quickwork_mobile/features/auth/providers/skill_provider.dart';
 import 'package:quickwork_mobile/features/auth/screens/profile_screen.dart';
 import 'package:quickwork_mobile/features/jobs/providers/job_posting_provider.dart';
 import 'package:quickwork_mobile/features/lookup/providers/lookup_provider.dart';
+import 'package:quickwork_mobile/features/reviews/data/review_repository.dart';
+import 'package:quickwork_mobile/features/reviews/models/review_model.dart';
+import 'package:quickwork_mobile/features/reviews/providers/review_provider.dart';
 
 class _FakeAuthRepository extends AuthRepository {
   @override
@@ -77,6 +80,28 @@ class _FakeSkillRepository extends UserSkillRepository {
   }
 }
 
+/// In-memory fake for the reviews repository (no live backend).
+class _FakeReviewRepository extends ReviewRepository {
+  _FakeReviewRepository({List<ReviewModel> initial = const []})
+      : _reviews = List.of(initial);
+
+  final List<ReviewModel> _reviews;
+
+  @override
+  Future<List<ReviewModel>> fetchReviewsForUser(int userId) async =>
+      List.of(_reviews);
+
+  @override
+  Future<double> fetchAverageRating(int userId) async {
+    if (_reviews.isEmpty) return 0;
+    final sum = _reviews.fold<int>(0, (acc, r) => acc + r.rating);
+    return sum / _reviews.length;
+  }
+}
+
+ReviewProvider _reviewProvider(List<ReviewModel> reviews) =>
+    ReviewProvider(repository: _FakeReviewRepository(initial: reviews));
+
 void main() {
   setUpAll(() {
     SharedPreferences.setMockInitialValues({});
@@ -92,6 +117,9 @@ void main() {
           value: JobPostingProvider(),
         ),
         ChangeNotifierProvider<SkillProvider>(create: (_) => SkillProvider()),
+        ChangeNotifierProvider<ReviewProvider>(
+          create: (_) => _reviewProvider(const []),
+        ),
       ],
       child: const MaterialApp(home: Scaffold(body: ProfileScreen())),
     ));
@@ -113,6 +141,9 @@ void main() {
           value: JobPostingProvider(),
         ),
         ChangeNotifierProvider<SkillProvider>(create: (_) => SkillProvider()),
+        ChangeNotifierProvider<ReviewProvider>(
+          create: (_) => _reviewProvider(const []),
+        ),
       ],
       child: const MaterialApp(home: Scaffold(body: ProfileScreen())),
     ));
@@ -158,10 +189,22 @@ void main() {
           value: JobPostingProvider(),
         ),
         ChangeNotifierProvider<SkillProvider>.value(value: skillProvider),
+        ChangeNotifierProvider<ReviewProvider>(
+          create: (_) => _reviewProvider(const []),
+        ),
       ],
       child: const MaterialApp(home: Scaffold(body: ProfileScreen())),
     ));
     await tester.pumpAndSettle();
+
+    // The new "Reviews & rating" card pushed the Skills card further down, so
+    // scroll the profile ListView until the skills card (its existing chip)
+    // is visible before interacting with it.
+    await tester.scrollUntilVisible(
+      find.text('Plumbing'),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
 
     // Existing skill is shown as a chip.
     expect(find.text('Plumbing'), findsOneWidget);

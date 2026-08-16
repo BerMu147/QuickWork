@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../reviews/providers/review_provider.dart';
+import '../../reviews/screens/review_form_screen.dart';
 import '../models/job_application_model.dart';
 import '../models/job_posting_model.dart';
 import '../providers/job_posting_provider.dart';
@@ -109,6 +111,47 @@ class _ReviewApplicationsScreenState extends State<ReviewApplicationsScreen> {
           jobTitle: widget.job.title,
           otherUserId: app.applicantUserId,
           otherUserName: app.applicantUserName,
+        ),
+      ),
+    );
+  }
+
+  /// Opens the review form so the publisher can rate a worker they accepted
+  /// for this (completed) job.
+  Future<void> _openReview(JobApplicationModel app) async {
+    final auth = context.read<AuthProvider>();
+    if (auth.user == null) return;
+
+    final reviewerId = auth.user!.id;
+    final reviewerName = auth.user!.fullName;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Consumer<ReviewProvider>(
+        builder: (sheetContext, reviewProvider, _) => ReviewFormScreen(
+          reviewerName: reviewerName,
+          reviewedName: app.applicantUserName,
+          jobTitle: widget.job.title,
+          // Live state so the sheet reflects the submission in progress.
+          submitting: reviewProvider.isSubmitting,
+          error: reviewProvider.submitError,
+          onSubmit: (rating, comment) async {
+            final ok = await reviewProvider.submitReview(
+              reviewerUserId: reviewerId,
+              reviewedUserId: app.applicantUserId,
+              jobPostingId: widget.job.id,
+              rating: rating,
+              comment: comment,
+            );
+            if (ok && sheetContext.mounted) {
+              Navigator.of(sheetContext).pop(true);
+            }
+          },
         ),
       ),
     );
@@ -228,12 +271,22 @@ class _ReviewApplicationsScreenState extends State<ReviewApplicationsScreen> {
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final app = _applications[index];
+                    final canReview = _jobStatus.toLowerCase() == 'completed' &&
+                        app.status == 'Accepted';
+                    final reviewProvider = context.watch<ReviewProvider>();
+                    final reviewedYet = canReview &&
+                        reviewProvider.hasReviewed(
+                          reviewerUserId: context.read<AuthProvider>().user?.id ?? 0,
+                          jobPostingId: widget.job.id,
+                        );
                     return _ApplicationTile(
                       application: app,
                       isUpdating: _updatingId == app.id,
                       onAccept: () => _setStatus(app, 'Accepted'),
                       onReject: () => _setStatus(app, 'Rejected'),
                       onMessage: () => _openConversation(app),
+                      onReview: canReview ? () => _openReview(app) : null,
+                      reviewedYet: reviewedYet,
                     );
                   },
                 ),
@@ -251,6 +304,8 @@ class _ApplicationTile extends StatelessWidget {
     required this.onAccept,
     required this.onReject,
     required this.onMessage,
+    this.onReview,
+    this.reviewedYet = false,
   });
 
   final JobApplicationModel application;
@@ -258,6 +313,13 @@ class _ApplicationTile extends StatelessWidget {
   final VoidCallback onAccept;
   final VoidCallback onReject;
   final VoidCallback onMessage;
+
+  /// Optional "Leave a review" action, shown for accepted workers of a
+  /// completed job.
+  final VoidCallback? onReview;
+
+  /// Whether the publisher already reviewed this worker for this job.
+  final bool reviewedYet;
 
   @override
   Widget build(BuildContext context) {
@@ -327,7 +389,31 @@ class _ApplicationTile extends StatelessWidget {
                     label: const Text('Message'),
                   ),
                 ),
-                if (!done) ...[
+                if (onReview != null && !reviewedYet) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: onReview,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.amber.shade700,
+                      ),
+                      icon: const Icon(Icons.star_outline),
+                      label: const Text('Review'),
+                    ),
+                  ),
+                ],
+                if (onReview != null && reviewedYet) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: null,
+                      icon: const Icon(Icons.check_circle_outline,
+                          color: Colors.green),
+                      label: const Text('Reviewed'),
+                    ),
+                  ),
+                ],
+                if (!done && onReview == null) ...[
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(

@@ -8,6 +8,7 @@ import 'package:quickwork_mobile/features/auth/providers/auth_provider.dart';
 import 'package:quickwork_mobile/features/auth/providers/skill_provider.dart';
 import 'package:quickwork_mobile/features/home/screens/home_screen.dart';
 import 'package:quickwork_mobile/features/jobs/providers/job_posting_provider.dart';
+import 'package:quickwork_mobile/features/reviews/providers/review_provider.dart';
 
 Widget _wrap(AuthProvider auth) {
   return MultiProvider(
@@ -16,8 +17,10 @@ Widget _wrap(AuthProvider auth) {
       ChangeNotifierProvider<JobPostingProvider>.value(
         value: JobPostingProvider(),
       ),
-      // ProfileScreen (reachable from the home tab) requires SkillProvider.
+      // ProfileScreen (reachable from the home tab) requires SkillProvider
+      // and ReviewProvider.
       ChangeNotifierProvider<SkillProvider>(create: (_) => SkillProvider()),
+      ChangeNotifierProvider<ReviewProvider>(create: (_) => ReviewProvider()),
     ],
     child: const MaterialApp(home: HomeScreen()),
   );
