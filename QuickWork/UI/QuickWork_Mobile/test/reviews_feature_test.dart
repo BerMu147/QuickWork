@@ -216,7 +216,27 @@ void main() {
     // Average (5+3)/2 = 4.0.
     expect(find.text('4.0'), findsOneWidget);
     expect(find.text('2 reviews'), findsOneWidget);
-    // Both reviewers are listed.
+    // The profile shows a single aggregate average + a "See reviews" button,
+    // not the inline reviewer list.
+    expect(find.text('Jane D.'), findsNothing);
+    expect(find.text('Bob K.'), findsNothing);
+
+    // The "See reviews" button is just below the review-count row, so scroll
+    // it fully into view before tapping.
+    final reviewButton = find.text('See reviews');
+    await tester.scrollUntilVisible(
+      reviewButton,
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(reviewButton);
+    await tester.pumpAndSettle();
+    expect(find.text('See reviews'), findsOneWidget);
+
+    // Open the separate Reviews page; the individual reviews are listed there.
+    await tester.tap(reviewButton);
+    await tester.pumpAndSettle();
+
     expect(find.text('Jane D.'), findsOneWidget);
     expect(find.text('Bob K.'), findsOneWidget);
     expect(find.text('Great worker!'), findsOneWidget);
