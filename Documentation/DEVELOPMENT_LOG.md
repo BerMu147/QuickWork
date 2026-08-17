@@ -198,3 +198,59 @@ Three user-reported bugs were fixed in the Mobile app (`QuickWork/UI/QuickWork_M
 - User can add previous work experiences. Nothing too descriptive, just the indication of experience — **✅ Done** — implemented as a **"Bio"** free-text field (self-described experience) + a **platform-verified "Work history"** card (completed jobs). See the Polish Progress entry above.
 - User can leave the impression after finished job with publisher (worker<=>publisher) can be positive/negative/neutral — **✅ Done** — the backend `Review` service is now wired to the frontend: a `ReviewFormScreen` (star rating + comment) launched from an accepted worker's tile (publisher→worker) and from the job detail page (worker→publisher) once a job is **Completed**; users see their average rating + reviews on Profile. See the Polish Progress entry above. *(Currently a fixed 1–5 star rating is used rather than separate positive/negative/neutral sentiment.)*
 - ✅ **Done** — completed jobs count on the profile, plus the **"Mark as Complete"** workflow it depends on.
+
+---
+
+## Desktop App (QuickWork_Desktop) — IN PROGRESS / READY (mirror of Mobile)
+
+> Separate Flutter app under `QuickWork/UI/QuickWork_Desktop/`, per project requirements. It **mirrors the completed Mobile app** (same features, same backend), with a **responsive navigation shell** added for desktop. The Admin console is a **separate** app (`QuickWork_Admin/`), which is the next phase.
+
+### ✅ Desktop — Scaffolding (two separate apps)
+- Per project requirements, the Desktop part is **two separate Flutter applications**:
+  - `QuickWork/UI/QuickWork_Desktop/` — the normal user app (mirrors Mobile).
+  - `QuickWork/UI/QuickWork_Admin/` — a standalone **Administrator** console (reports, analytics, user/job/review moderation, support). **Next phase.**
+- Both scaffolded with `flutter create --org ba.quickwork` for **all cross-platform targets**: `windows, linux, macos, android, ios, web`.
+- Project names: `quickwork_desktop` and `quickwork_admin`. Org matches the Mobile app (`ba.quickwork`).
+- Both have the full platform scaffold (`android/ ios/ lib/ linux/ macos/ test/ web/ windows/`) + `pubspec.yaml` + `analysis_options.yaml`.
+- Committed: `906f6a9` (Admin scaffold), `068b84d` (Desktop scaffold).
+
+### ✅ Desktop — Port of Mobile (mirror)
+- Copied the proven Mobile architecture into `QuickWork_Desktop`: `core/` (`api`, `theme`, `constants`), `features/` (`auth`, `jobs`, `lookup`, `reviews`, `splash`, `home`), `app/`, `main.dart`.
+- Fixed the package namespace `package:quickwork_mobile/` → `package:quickwork_desktop/`.
+- Added the Mobile dependencies to `pubspec.yaml` (`dio`, `provider`, `go_router`, `shared_preferences`, `intl`) + the `assets/splash_logo.png` asset.
+- Ported the offline widget tests (15 suites) with corrected imports.
+- **Feature parity with Mobile:** auth (login/registration/session/JWT guest browse), job listings/detail/Apply/Publish, My Jobs (Published + Applications), Search & filters, publisher Accept/Reject (Review Applications), per-job messaging (Conversation), job status lifecycle ("Mark as Complete"), Profile (edit, Bio, custom skills, work history, completed-jobs counter), Reviews & rating + dedicated Reviews screen, developer-profile preview (ApplicantProfile), clear-on-logout.
+- **Verification:** `flutter analyze` → 0 issues; **31 offline widget tests pass.**
+- Committed: `b523389` (Desktop Port Mirroring of Mobile).
+
+### ✅ Desktop — Responsive navigation polish
+- Replaced the fixed bottom-nav shell with a **width-aware responsive layout** in `HomeScreen`:
+  - **Wide screens (≥ 600px logical width — desktop, tablet landscape):** a left-hand **`NavigationRail`** with **Jobs / My Jobs / Profile** destinations, plus a **"publish a job" "+" icon** docked to the top of the rail (shown only to logged-in users; guests see the login icon). No bottom bar.
+  - **Narrow screens (< 600px — phones):** the original **`BottomNavigationBar`** with the floating "Publish" **FAB** on the Jobs tab.
+  - The rail uses `labelType: NavigationRailLabelType.all` (icons + labels). NOTE: `extended: true` was intentionally **not** combined with `labelType: all` because that combination triggers a Flutter `NavigationRail` assertion — the conflict was resolved by dropping `extended`.
+- Same logic preserved: account popup menu, logout-with-clear-on-logout, guest login-gating, all three tab screens.
+- **Tests:** added 2 tests to `test/home_screen_test.dart` — wide screen shows `NavigationRail` and **no** bottom bar; narrow screen shows `BottomNavigationBar` and no rail (uses `tester.view.physicalSize`/`devicePixelRatio` to set the logical viewport).
+- **Verification:** `flutter analyze` → 0 issues; **31 offline widget tests pass.**
+- ⚠️ **Uncommitted** (user commits): `lib/features/home/screens/home_screen.dart`, `test/home_screen_test.dart`.
+
+> **Note on tooling:** the Desktop `pubspec.yaml` and the first `home_screen.dart` rewrite suffered **whitespace/encoding corruption** via PowerShell `Set-Content` (non-UTF-8 output broke the Dart analyzer's file discovery). Both were rewritten cleanly (`pubspec.yaml` via direct file write; `home_screen.dart` via the file tool in proper UTF-8).
+
+---
+
+## Admin App (QuickWork_Admin) — NEXT PHASE (planned)
+
+Scaffolded but not yet built (`QuickWork/UI/QuickWork_Admin/`). See `AI_Instructions_Desktop2.md` for the full handoff. Scope (from project requirements), to confirm/refine with the user:
+1. **Overview by job offer / job demand categories** (analytics).
+2. Adding new jobs/services.
+3. Sending relevant notifications to users.
+4. Communication between users via messages.
+5. Sending a request for a requested job / offered service.
+6. Job request confirmation.
+7. Connecting users and work duties.
+8. Adding services offered on the personal profile.
+9. Business execution analytics (user profile).
+10. Editing the user profile.
+11. **Administration panel for managing the application** (the admin console / dashboard — reports, support, requests, analytics).
+12. Business reports (exportable).
+
+**Note:** **Payments** are explicitly deferred — the user is unsure whether a PayPal service is required or whether it will be removed entirely; confirm before building anything payment-related.
