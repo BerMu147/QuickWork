@@ -41,5 +41,35 @@ void main() {
     expect(find.text('QuickWork'), findsOneWidget);
     expect(find.byIcon(Icons.account_circle), findsNothing);
   });
+
+  testWidgets('Wide screens use a NavigationRail instead of a bottom bar',
+      (tester) async {
+    // Force a wide (desktop-like) logical viewport.
+    tester.view.physicalSize = const Size(1100, 700);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final auth = AuthProvider();
+    await tester.pumpWidget(_wrap(auth));
+    await tester.pumpAndSettle();
+
+    // Desktop layout: left rail present, no bottom navigation bar.
+    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(BottomNavigationBar), findsNothing);
+  });
+
+  testWidgets('Narrow screens keep the bottom navigation bar',
+      (tester) async {
+    // Force a narrow (phone-like) logical viewport.
+    tester.view.physicalSize = const Size(400, 700);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final auth = AuthProvider();
+    await tester.pumpWidget(_wrap(auth));
+    await tester.pumpAndSettle();
+
+    // Phone layout: bottom bar present, no left rail.
+    expect(find.byType(BottomNavigationBar), findsOneWidget);
+    expect(find.byType(NavigationRail), findsNothing);
+  });
 }
 
