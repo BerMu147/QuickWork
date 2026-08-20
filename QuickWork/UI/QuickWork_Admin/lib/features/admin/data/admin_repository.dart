@@ -1,10 +1,9 @@
-import 'package:dio/dio.dart';
-
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exceptions.dart';
 import '../models/admin_job_posting_model.dart';
 import '../models/admin_review_model.dart';
 import '../models/user_response_model.dart' show AdminUserModel;
+import '../models/user_activation_payload.dart';
 import '../models/category_model.dart';
 
 /// Handles all data used by the administrator console.
