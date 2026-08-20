@@ -61,7 +61,6 @@ class _UsersScreenState extends State<UsersScreen> {
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<AdminProvider>();
-    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -144,13 +143,12 @@ class _UserTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final roles = user.roles.map((r) => r.name).toList();
     final roleText = roles.isEmpty ? 'No role' : roles.join(', ');
 
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: AppConstants.primary.withOpacity(0.15),
+        backgroundColor: AppConstants.primary.withValues(alpha: 0.15),
         child: Text(
           user.fullName.isEmpty ? '?' : user.fullName[0].toUpperCase(),
           style: const TextStyle(
@@ -193,6 +191,7 @@ class _ActiveSwitch extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -212,7 +211,6 @@ class _ActiveSwitch extends StatelessWidget {
           ],
         ),
       ],
-      mainAxisAlignment: MainAxisAlignment.center,
     );
   }
 }

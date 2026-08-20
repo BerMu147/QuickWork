@@ -211,7 +211,7 @@ class _KpiCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
+                color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: color, size: 28),
@@ -266,7 +266,10 @@ class _CategoryRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 140,
-            child: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
           Expanded(
             child: ClipRRect(
@@ -335,7 +338,10 @@ class _ErrorStrip extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
+          Icon(
+            Icons.error_outline,
+            color: Theme.of(context).colorScheme.error,
+          ),
           const SizedBox(width: 8),
           Expanded(child: Text(message)),
         ],
