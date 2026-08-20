@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exceptions.dart';
 import '../models/admin_job_posting_model.dart';
