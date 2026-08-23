@@ -2,10 +2,14 @@ import 'package:dio/dio.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exceptions.dart';
+import '../../auth/models/role_model.dart';
 import '../models/admin_job_posting_model.dart';
 import '../models/admin_review_model.dart';
+import '../models/city_option.dart';
+import '../models/gender_option.dart';
 import '../models/user_response_model.dart' show AdminUserModel;
 import '../models/user_activation_payload.dart';
+import '../models/user_update_payload.dart';
 import '../models/category_model.dart';
 
 /// Handles all data used by the administrator console.
@@ -64,6 +68,89 @@ class AdminRepository {
         data: payload.toJson(),
       );
       return AdminUserModel.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Fetches a single user by id via `GET /Users/{id}`.
+  Future<AdminUserModel> fetchUserById(int id) async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/Users/$id',
+      );
+      return AdminUserModel.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Updates a user's profile (and roles / active flag) via `PUT /Users/{id}`.
+  Future<AdminUserModel> updateUser({
+    required int userId,
+    required UserUpdatePayload payload,
+  }) async {
+    try {
+      final response = await _apiClient.dio.put<Map<String, dynamic>>(
+        '/Users/$userId',
+        data: payload.toJson(),
+      );
+      return AdminUserModel.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Lookups (genders / cities / roles) for the profile edit form
+  // ---------------------------------------------------------------------------
+
+  /// Fetches the gender options.
+  Future<List<GenderOption>> fetchGenders() async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/Gender',
+        queryParameters: const {'PageSize': 100, 'IncludeTotalCount': true},
+      );
+      final items = response.data?['items'] as List<dynamic>? ?? [];
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(GenderOption.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Fetches the city options.
+  Future<List<CityOption>> fetchCities() async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/City',
+        queryParameters: const {'PageSize': 200, 'IncludeTotalCount': true},
+      );
+      final items = response.data?['items'] as List<dynamic>? ?? [];
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(CityOption.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Fetches the available roles (for assigning/removing roles).
+  Future<List<RoleModel>> fetchRoles() async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/Role',
+        queryParameters: const {'PageSize': 100, 'IncludeTotalCount': true},
+      );
+      final items = response.data?['items'] as List<dynamic>? ?? [];
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(RoleModel.fromJson)
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -170,4 +257,5 @@ class AdminRepository {
     }
   }
 }
+
 

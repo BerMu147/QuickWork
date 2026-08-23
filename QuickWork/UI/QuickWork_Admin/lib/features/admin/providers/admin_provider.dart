@@ -1,11 +1,15 @@
 import 'package:flutter/foundation.dart';
 
+import '../../auth/models/role_model.dart';
 import '../data/admin_repository.dart';
 import '../models/admin_job_posting_model.dart';
 import '../models/admin_review_model.dart';
 import '../models/category_model.dart';
+import '../models/city_option.dart';
+import '../models/gender_option.dart';
 import '../models/user_response_model.dart';
 import '../models/user_activation_payload.dart';
+import '../models/user_update_payload.dart';
 
 /// Aggregate analytics shown on the dashboard KPI cards.
 class DashboardSummary {
@@ -73,6 +77,20 @@ class AdminProvider extends ChangeNotifier {
   String? _reviewsError;
   bool _isDeletingReview = false;
 
+  // ---- User profile detail --------------------------------------------------
+  AdminUserModel? _userDetail;
+  bool _isLoadingUserDetail = false;
+  String? _userDetailError;
+  bool _isSavingUser = false;
+  String? _userSaveError;
+
+  // ---- Lookups (genders / cities / roles) ----------------------------------
+  List<GenderOption> _genders = [];
+  List<CityOption> _cities = [];
+  List<RoleModel> _allRoles = [];
+  bool _isLoadingLookups = false;
+  String? _lookupsError;
+
   // ---- Getters --------------------------------------------------------------
   DashboardSummary get summary => _summary;
   List<CategoryOverviewItem> get categoryOverview => _categoryOverview;
@@ -91,6 +109,18 @@ class AdminProvider extends ChangeNotifier {
   bool get isLoadingReviews => _isLoadingReviews;
   String? get reviewsError => _reviewsError;
   bool get isDeletingReview => _isDeletingReview;
+
+  AdminUserModel? get userDetail => _userDetail;
+  bool get isLoadingUserDetail => _isLoadingUserDetail;
+  String? get userDetailError => _userDetailError;
+  bool get isSavingUser => _isSavingUser;
+  String? get userSaveError => _userSaveError;
+
+  List<GenderOption> get genders => _genders;
+  List<CityOption> get cities => _cities;
+  List<RoleModel> get allRoles => _allRoles;
+  bool get isLoadingLookups => _isLoadingLookups;
+  String? get lookupsError => _lookupsError;
 
   // ---------------------------------------------------------------------------
   // Dashboard / analytics
@@ -197,6 +227,73 @@ class AdminProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _usersError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Loads a single user's full profile for the detail/edit view.
+  Future<void> loadUserDetail(int userId) async {
+    _isLoadingUserDetail = true;
+    _userDetailError = null;
+    notifyListeners();
+
+    try {
+      _userDetail = await _repository.fetchUserById(userId);
+      _isLoadingUserDetail = false;
+    } catch (e) {
+      _isLoadingUserDetail = false;
+      _userDetailError = e.toString();
+    }
+    notifyListeners();
+  }
+
+  /// Loads gender / city / role options for the profile edit form.
+  Future<void> loadLookups() async {
+    _isLoadingLookups = true;
+    _lookupsError = null;
+    notifyListeners();
+
+    try {
+      final results = await Future.wait<Object>([
+        _repository.fetchGenders(),
+        _repository.fetchCities(),
+        _repository.fetchRoles(),
+      ]);
+      _genders = results[0] as List<GenderOption>;
+      _cities = results[1] as List<CityOption>;
+      _allRoles = results[2] as List<RoleModel>;
+      _isLoadingLookups = false;
+    } catch (e) {
+      _isLoadingLookups = false;
+      _lookupsError = e.toString();
+    }
+    notifyListeners();
+  }
+
+  /// Persists an admin edit to a user's profile, roles and active flag.
+  ///
+  /// Also refreshes the user-detail state and the users directory so the
+  /// console reflects the change everywhere.
+  Future<bool> updateUser({
+    required int userId,
+    required UserUpdatePayload payload,
+  }) async {
+    _isSavingUser = true;
+    _userSaveError = null;
+    notifyListeners();
+
+    try {
+      final updated =
+          await _repository.updateUser(userId: userId, payload: payload);
+      _userDetail = updated;
+      _users = _users.map((u) => u.id == updated.id ? updated : u).toList();
+      _isSavingUser = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isSavingUser = false;
+      _userSaveError = e.toString();
       notifyListeners();
       return false;
     }

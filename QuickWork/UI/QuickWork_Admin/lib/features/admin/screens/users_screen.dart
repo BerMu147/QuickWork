@@ -4,10 +4,12 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../models/user_response_model.dart';
 import '../providers/admin_provider.dart';
+import 'user_profile_screen.dart';
 
 /// User administration screen.
 ///
 /// Lists/searchable directory of users with an activate/deactivate toggle.
+/// Tapping a user opens their full administrator profile (detail/edit).
 class UsersScreen extends StatefulWidget {
   const UsersScreen({super.key});
 
@@ -54,6 +56,14 @@ class _UsersScreenState extends State<UsersScreen> {
               : admin.usersError ?? 'Failed to update user.',
         ),
         backgroundColor: success ? AppConstants.primary : Colors.red,
+      ),
+    );
+  }
+
+  void _openProfile(AdminUserModel user) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => UserProfileScreen(userId: user.id),
       ),
     );
   }
@@ -124,6 +134,7 @@ class _UsersScreenState extends State<UsersScreen> {
                                 return _UserTile(
                                   user: user,
                                   onToggleActive: () => _toggleActive(user),
+                                  onTap: () => _openProfile(user),
                                 );
                               },
                             ),
@@ -136,10 +147,15 @@ class _UsersScreenState extends State<UsersScreen> {
 }
 
 class _UserTile extends StatelessWidget {
-  const _UserTile({required this.user, required this.onToggleActive});
+  const _UserTile({
+    required this.user,
+    required this.onToggleActive,
+    required this.onTap,
+  });
 
   final AdminUserModel user;
   final VoidCallback onToggleActive;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +163,7 @@ class _UserTile extends StatelessWidget {
     final roleText = roles.isEmpty ? 'No role' : roles.join(', ');
 
     return ListTile(
+      onTap: onTap,
       leading: CircleAvatar(
         backgroundColor: AppConstants.primary.withValues(alpha: 0.15),
         child: Text(
@@ -172,9 +189,15 @@ class _UserTile extends StatelessWidget {
         ],
       ),
       isThreeLine: true,
-      trailing: _ActiveSwitch(
-        active: user.isActive,
-        onChanged: (_) => onToggleActive(),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ActiveSwitch(
+            active: user.isActive,
+            onChanged: (_) => onToggleActive(),
+          ),
+          const Icon(Icons.chevron_right),
+        ],
       ),
     );
   }
