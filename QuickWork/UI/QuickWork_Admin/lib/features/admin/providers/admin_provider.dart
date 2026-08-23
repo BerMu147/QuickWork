@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 
 import '../../auth/models/role_model.dart';
@@ -7,9 +9,11 @@ import '../models/admin_review_model.dart';
 import '../models/category_model.dart';
 import '../models/city_option.dart';
 import '../models/gender_option.dart';
+import '../models/report_models.dart';
 import '../models/user_response_model.dart';
 import '../models/user_activation_payload.dart';
 import '../models/user_update_payload.dart';
+import '../services/csv_export_service.dart';
 
 /// Aggregate analytics shown on the dashboard KPI cards.
 class DashboardSummary {
@@ -91,6 +95,15 @@ class AdminProvider extends ChangeNotifier {
   bool _isLoadingLookups = false;
   String? _lookupsError;
 
+  // ---- Reports --------------------------------------------------------------
+  ReportData _reportData = const ReportData();
+  bool _isLoadingReports = false;
+  String? _reportsError;
+  bool _isExporting = false;
+  String? _exportMessage;
+  String? _lastExportPath;
+  final CsvExportService _csvExport = CsvExportService();
+
   // ---- Getters --------------------------------------------------------------
   DashboardSummary get summary => _summary;
   List<CategoryOverviewItem> get categoryOverview => _categoryOverview;
@@ -121,6 +134,222 @@ class AdminProvider extends ChangeNotifier {
   List<RoleModel> get allRoles => _allRoles;
   bool get isLoadingLookups => _isLoadingLookups;
   String? get lookupsError => _lookupsError;
+
+  ReportData get reportData => _reportData;
+  bool get isLoadingReports => _isLoadingReports;
+  String? get reportsError => _reportsError;
+  bool get isExporting => _isExporting;
+  String? get exportMessage => _exportMessage;
+  String? get lastExportPath => _lastExportPath;
+
+  // ---------------------------------------------------------------------------
+  // Reports (Phase 2, Item 2)
+  // ---------------------------------------------------------------------------
+
+  /// Computes the three report tables client-side from the existing read
+  /// endpoints (there is no dedicated analytics endpoint).
+  Future<void> loadReports() async {
+    _isLoadingReports = true;
+    _reportsError = null;
+    notifyListeners();
+
+    try {
+      final results = await Future.wait<Object>([
+        _repository.fetchUsers(pageSize: 500),
+        _repository.fetchRoles(),
+        _repository.fetchJobPostings(pageSize: 500),
+        _repository.fetchCategories(),
+        _repository.fetchReviews(pageSize: 500),
+      ]);
+
+      final allUsers = (results[0] as List<AdminUserModel>);
+      final allRoles = (results[1] as List<RoleModel>);
+      final allJobs = (results[2] as List<AdminJobPostingModel>);
+      final categories = (results[3] as List<CategoryModel>);
+      final allReviews = (results[4] as List<AdminReviewModel>);
+
+      _reportData = _buildReportData(
+        users: allUsers,
+        roles: allRoles,
+        jobs: allJobs,
+        categories: categories,
+        reviews: allReviews,
+      );
+      _isLoadingReports = false;
+    } catch (e) {
+      _isLoadingReports = false;
+      _reportsError = e.toString();
+    }
+    notifyListeners();
+  }
+
+  ReportData _buildReportData({
+    required List<AdminUserModel> users,
+    required List<RoleModel> roles,
+    required List<AdminJobPostingModel> jobs,
+    required List<CategoryModel> categories,
+    required List<AdminReviewModel> reviews,
+  }) {
+    final activeUsers = users.where((u) => u.isActive).length;
+
+    // Users by role: derive from all known roles, but include any role string
+    // actually present on a user even if the role list is out of sync.
+    final roleSet = {for (final r in roles) r.name};
+    for (final u in users) {
+      for (final r in u.roles) {
+        roleSet.add(r.name);
+      }
+    }
+    String normalize(String s) => s.toLowerCase();
+
+    final roleNames = roleSet.toList();
+    roleNames.sort();
+    final usersByRole = <UserReportRow>[];
+    for (final roleName in roleNames) {
+      final inRole = users.where(
+        (u) => u.roles.any((r) => normalize(r.name) == normalize(roleName)),
+      ).length;
+      usersByRole.add(
+        UserReportRow(
+          role: roleName,
+          total: inRole,
+          active: users
+              .where((u) =>
+                  u.isActive &&
+                  u.roles.any((r) => normalize(r.name) == normalize(roleName)))
+              .length,
+          inactive: users
+              .where((u) =>
+                  !u.isActive &&
+                  u.roles.any((r) => normalize(r.name) == normalize(roleName)))
+              .length,
+        ),
+      );
+    }
+
+    // Jobs by status (known lifecycle statuses).
+    const statuses = ['Open', 'InProgress', 'Completed', 'Cancelled'];
+    final jobsByStatus = <JobStatusRow>[];
+    for (final status in statuses) {
+      jobsByStatus.add(
+        JobStatusRow(
+          status: status,
+          count: jobs.where((j) => j.status.toLowerCase() == status.toLowerCase()).length,
+        ),
+      );
+    }
+
+    // Jobs by category (reuse the category list for consistent ordering).
+    final jobsByCategory = <JobCategoryRow>[];
+    for (final cat in categories) {
+      final count = jobs.where((j) => j.categoryId == cat.id).length;
+      if (count > 0) {
+        jobsByCategory.add(JobCategoryRow(category: cat.name, count: count));
+      }
+    }
+    jobsByCategory.sort((a, b) => b.count.compareTo(a.count));
+
+    // Reviews: total, average rating, count per rating bucket.
+    final totalReviews = reviews.length;
+    final ratingSum = reviews.fold<int>(0, (sum, r) => sum + r.rating);
+    final averageRating =
+        totalReviews == 0 ? 0.0 : ratingSum / totalReviews;
+    final reviewsByRating = <ReviewRatingRow>[];
+    for (var star = 1; star <= 5; star++) {
+      reviewsByRating.add(
+        ReviewRatingRow(
+          rating: star,
+          count: reviews.where((r) => r.rating == star).length,
+        ),
+      );
+    }
+
+    return ReportData(
+      totalUsers: users.length,
+      activeUsers: activeUsers,
+      inactiveUsers: users.length - activeUsers,
+      usersByRole: usersByRole,
+      totalJobs: jobs.length,
+      jobsByStatus: jobsByStatus,
+      jobsByCategory: jobsByCategory,
+      totalReviews: totalReviews,
+      averageRating: averageRating,
+      reviewsByRating: reviewsByRating,
+    );
+  }
+
+  /// Serializes the currently-loaded reports into a single combined CSV
+  /// (one file with a labelled section per report).
+  String buildCombinedCsv() {
+    final d = _reportData;
+    final b = StringBuffer();
+
+    // -- Users ----------------------------------------------------------------
+    b.writeln('USERS REPORT');
+    b.writeln('Total users,${d.totalUsers}');
+    b.writeln('Active users,${d.activeUsers}');
+    b.writeln('Inactive users,${d.inactiveUsers}');
+    b.writeln('Role,Total,Active,Inactive');
+    for (final row in d.usersByRole) {
+      b.writeln('${escapeCsv(row.role)},${row.total},${row.active},${row.inactive}');
+    }
+
+    b.writeln();
+
+    // -- Jobs -----------------------------------------------------------------
+    b.writeln('JOBS REPORT');
+    b.writeln('Total jobs,${d.totalJobs}');
+    b.writeln('Status,Count');
+    for (final row in d.jobsByStatus) {
+      b.writeln('${escapeCsv(row.status)},${row.count}');
+    }
+    b.writeln('Category,Count');
+    for (final row in d.jobsByCategory) {
+      b.writeln('${escapeCsv(row.category)},${row.count}');
+    }
+
+    b.writeln();
+
+    // -- Reviews --------------------------------------------------------------
+    b.writeln('REVIEWS REPORT');
+    b.writeln('Total reviews,${d.totalReviews}');
+    b.writeln('Average rating,${d.averageRating.toStringAsFixed(2)}');
+    b.writeln('Rating,Count');
+    for (final row in d.reviewsByRating) {
+      b.writeln('${row.rating} star,${row.count}');
+    }
+
+    return b.toString();
+  }
+
+  /// Writes the combined CSV to a fixed, well-known location via
+  /// [CsvExportService]. [exportDirOverride] lets tests inject a directory.
+  Future<void> exportReports({Directory? exportDirOverride}) async {
+    _isExporting = true;
+    _exportMessage = null;
+    _lastExportPath = null;
+    notifyListeners();
+
+    try {
+      final content = buildCombinedCsv();
+      final path = await _csvExport.export(
+        content: content,
+        getDir:
+            exportDirOverride == null ? null : () async => exportDirOverride,
+      );
+      _isExporting = false;
+      if (path == null) {
+        _exportMessage = 'Could not determine a location to write the export.';
+      } else {
+        _lastExportPath = path;
+        _exportMessage = 'Exported to $path';
+      }
+    } catch (e) {
+      _isExporting = false;
+      _exportMessage = 'Export failed: $e';
+    }
+    notifyListeners();
+  }
 
   // ---------------------------------------------------------------------------
   // Dashboard / analytics
@@ -361,4 +590,13 @@ class AdminProvider extends ChangeNotifier {
       return false;
     }
   }
+}
+
+/// Quotes/escapes a single CSV field so commas, quotes and newlines do not
+/// corrupt the column layout.
+String escapeCsv(String value) {
+  final needsQuoting =
+      value.contains(',') || value.contains('"') || value.contains('\n');
+  if (!needsQuoting) return value;
+  return '"${value.replaceAll('"', '""')}"';
 }
