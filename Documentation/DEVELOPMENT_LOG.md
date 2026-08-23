@@ -278,7 +278,7 @@ Scope (from project requirements), to confirm/refine with the user module by mod
 9. Business execution analytics (user profile).
 10. Editing a user profile. — ✅ **done (User Profile admin detail/edit module, Phase 2 item 1)** — admin can now view & edit any user's profile (name, email, phone, bio, gender, city, active flag, roles) from the Users directory; also covers the *"Adding services offered on the personal profile"* (edit-on-behalf) intent. See the dedicated Phase 2 entry below.
 11. Administration panel for managing the application (reports / support / requests / analytics).
-12. Business reports (exportable). — ⏳ **Item 2 (next)**.
+12. Business reports (exportable). — ✅ **done (Business reports module, Phase 2 item 2)** — see the dedicated Phase 2 entry below.
 
 Recommended order to propose to the user: analytics/dashboard + user administration → job moderation → reviews moderation → business reports (exportable) → per-user business execution analytics.
 
@@ -290,6 +290,19 @@ Recommended order to propose to the user: analytics/dashboard + user administrat
 - **New files:** `models/gender_option.dart`, `models/city_option.dart`, `models/user_update_payload.dart` (`UserUpdatePayload` mirrors `UserUpsertRequest` so role assignments are never wiped on update), `screens/user_profile_screen.dart`, `test/user_profile_screen_test.dart`.
 - **Modified:** `admin_repository.dart` (`fetchUserById`, `updateUser`, `fetchGenders`, `fetchCities`, `fetchRoles`), `admin_provider.dart` (user-detail state + `loadUserDetail`/`loadLookups`/`updateUser`), `users_screen.dart` (tappable rows with chevron → `UserProfileScreen`).
 - **Verification:** `flutter analyze` → **0 issues**; offline widget tests → **3 pass** (2 new + 1 existing); `flutter build windows --debug` builds `quickwork_admin.exe`.
+- Committed by user.
+
+#### ✅ Admin — Phase 2, Item 2: Business reports (exportable) (DONE)
+- Added a **Reports** module — a new nav destination (rail + bottom bar) opening a tabbed screen that shows three client-side aggregate tables over the existing read endpoints (project item 9/12 territory; **no analytics endpoint exists**, so all totals are computed from `/Users`, `/Role`, `/JobPostings`, `/Category`, `/Reviews`).
+- **Users report:** total / active / inactive users + a per-role breakdown (Total, Active, Inactive).
+- **Jobs report:** total jobs + counts by status (`Open`, `InProgress`, `Completed`, `Cancelled`) and by category.
+- **Reviews report:** total reviews, average rating (2 d.p.), and counts per 1–5-star bucket.
+- **Export — one combined CSV** (per product decision): an **Export CSV** button in the app-bar writes a single `quickwork_admin_reports_<timestamp>.csv` to a **fixed path** — `path_provider`'s Downloads directory (fallback: Application Documents) — so no native Save-dialog dependency is needed (fits the "use it occasionally" requirement). The file contains labelled `USERS REPORT` / `JOBS REPORT` / `REVIEWS REPORT` sections with headers + rows; the in-app notice shows the written path. Fields are CSV-escaped for embedded commas/quotes/newlines.
+- **No backend change** — pure frontend aggregation + CSV generation.
+- **New files:** `models/report_models.dart` (`ReportData` + `UserReportRow`/`JobStatusRow`/`JobCategoryRow`/`ReviewRatingRow`), `services/csv_export_service.dart` (`CsvExportService`, writes via `path_provider`, test-overridable directory), `screens/reports_screen.dart` (tabbed UI with KPI chips + tables + export + refresh + error states), `test/reports_screen_test.dart`.
+- **Modified:** `admin_provider.dart` (report state/getters + `loadReports()`, `buildCombinedCsv()`, `exportReports()`), `home_screen.dart` (added **Reports** destination to the rail, bottom bar, and `_tabs`), `pubspec.yaml` (added `path_provider: ^2.1.5`).
+- **Tests:** 5 new — CSV headers/rows for all three reports, aggregate math (users active/inactive, average rating), Users-tab rendering, tab switching across reports, and a real file-write export verification (kept in a plain `test()` so the fake-async widget zone never hangs on file I/O).
+- **Verification:** `flutter analyze` → **0 issues**; offline widget tests → **8 pass** (5 new + 2 profile + 1 existing, clean exit — no timeout); `flutter build windows --debug` builds `quickwork_admin.exe`.
 - Committed by user.
 
 **Notes / caveats:**
