@@ -231,17 +231,44 @@ Three user-reported bugs were fixed in the Mobile app (`QuickWork/UI/QuickWork_M
 - Same logic preserved: account popup menu, logout-with-clear-on-logout, guest login-gating, all three tab screens.
 - **Tests:** added 2 tests to `test/home_screen_test.dart` — wide screen shows `NavigationRail` and **no** bottom bar; narrow screen shows `BottomNavigationBar` and no rail (uses `tester.view.physicalSize`/`devicePixelRatio` to set the logical viewport).
 - **Verification:** `flutter analyze` → 0 issues; **31 offline widget tests pass.**
-- ⚠️ **Uncommitted** (user commits): `lib/features/home/screens/home_screen.dart`, `test/home_screen_test.dart`.
+- Committed: `be51158` (Added responsiveness).
 
 > **Note on tooling:** the Desktop `pubspec.yaml` and the first `home_screen.dart` rewrite suffered **whitespace/encoding corruption** via PowerShell `Set-Content` (non-UTF-8 output broke the Dart analyzer's file discovery). Both were rewritten cleanly (`pubspec.yaml` via direct file write; `home_screen.dart` via the file tool in proper UTF-8).
 
 ---
 
-## Admin App (QuickWork_Admin) — NEXT PHASE (planned)
+## Admin App (QuickWork_Admin) — IN PROGRESS (standalone Administrator console)
 
-Scaffolded but not yet built (`QuickWork/UI/QuickWork_Admin/`). See `AI_Instructions_Desktop2.md` for the full handoff. Scope (from project requirements), to confirm/refine with the user:
-1. **Overview by job offer / job demand categories** (analytics).
-2. Adding new jobs/services.
+> Separate Flutter app under `QuickWork/UI/QuickWork_Admin/`, per project requirements. The admin console is gated behind the **`Administrator`** role and reuses the proven **Model → Repository(Dio) → Provider → Screen** architecture. See `AI_Instructions_Desktop3.md` for the full Phase 2 handoff.
+
+### Admin — Scaffolding
+- `flutter create --org ba.quickwork` for all cross-platform targets (`windows, linux, macos, android, ios, web`).
+- Project `quickwork_admin`, org `ba.quickwork`. Committed: `906f6a9`.
+- Added the required dependencies (`dio`, `provider`, `go_router`, `shared_preferences`, `intl`).
+
+### ✅ Admin — Phase 1 (foundation + dashboard/analytics + user/job/review moderation)
+- **`core/` (reused):** `api_client.dart` (JWT bearer interceptor + self-signed cert acceptance), `api_exceptions.dart`, `app_theme.dart`, `app_constants.dart`. Admin uses **separate** persistence keys (`admin_auth_token` / `admin_auth_user`) so admin and user-app sessions never collide on the same device.
+- **`features/auth` (administrator-gated):** `UserModel`, `RoleModel`, `LoginRequest` / `LoginResponse`, `AuthRepository` (`POST /Users/authenticate`), `AuthProvider` with an `isAdministrator` getter (`hasRole('Administrator')`) + session persistence, and a `LoginScreen` that **rejects non-admin accounts** with a "Access denied. Only administrators may use this console." message.
+- **`features/admin` (the console modules):**
+  - Models: `AdminUserModel`, `AdminJobPostingModel`, `AdminReviewModel`, `CategoryModel`, and `UserActivationPayload` (carries the user's current `RoleIds` so toggling active status via `PUT /Users/{id}` never wipes role assignments — matches the backend `UserService.UpdateAsync` behaviour).
+  - `AdminRepository`: reads/aggregations over `/Users`, `/JobPostings`, `/Reviews`, `/Category` (include-total-count paging pattern) + activate/deactivate + `DELETE /Reviews/{id}`.
+  - `AdminProvider` (ChangeNotifier): dashboard summary, category overview, users list + active-toggle, jobs list, reviews list + remove — each with loading/error states.
+  - Screens:
+    - **Dashboard** — KPI cards (total/active users, total jobs, reviews, jobs by status Open/InProgress/Completed, categories) + a **job-offers-by-category** overview bar. Aggregates (no analytics endpoint exists).
+    - **Users** — searchable directory with an **activate/deactivate** switch.
+    - **Jobs** — moderation list **filterable by status** (Open / InProgress / Completed / Cancelled).
+    - **Reviews** — moderation list with **remove (delete)** of abusive reviews.
+- **`features/home`:** responsive shell (`NavigationRail` on wide / `BottomNavigationBar` on narrow) with the **login gate** — unauthenticated or non-admin users see the `LoginScreen`.
+- **`app/app.dart` + `main.dart`:** `MultiProvider` wiring + session restore on startup.
+- **Verification:** `flutter analyze` → **0 issues**; widget test (unauthenticated → login screen) **passes**; `flutter build windows --debug` builds `quickwork_admin.exe` successfully.
+- Committed: `4e14c6c`, `a689646`, `c31d779`, `5fa661c`, `7dbbf87`.
+
+> **ⓘ Incident note:** a pair of parallel edits briefly overwrote `dashboard_screen.dart` with `users_screen.dart` content. It was detected via `view_diff`/diff verification, the corrupted file was removed and recreated correctly, and analyze/test/build were re-run to confirm a clean result — a reminder of the parallel-edit risk noted in the Desktop phase; when in doubt, read the whole file back and diff-verify.
+
+### Admin — Phase 2 (NEXT — planned)
+Scope (from project requirements), to confirm/refine with the user module by module:
+1. Overview by job offer / job demand categories (analytics). — ✅ **done (Phase 1 dashboard)**; can extend.
+2. Adding new jobs / services.
 3. Sending relevant notifications to users.
 4. Communication between users via messages.
 5. Sending a request for a requested job / offered service.
@@ -249,8 +276,25 @@ Scaffolded but not yet built (`QuickWork/UI/QuickWork_Admin/`). See `AI_Instruct
 7. Connecting users and work duties.
 8. Adding services offered on the personal profile.
 9. Business execution analytics (user profile).
-10. Editing the user profile.
-11. **Administration panel for managing the application** (the admin console / dashboard — reports, support, requests, analytics).
-12. Business reports (exportable).
+10. Editing a user profile. — ✅ **done (User Profile admin detail/edit module, Phase 2 item 1)** — admin can now view & edit any user's profile (name, email, phone, bio, gender, city, active flag, roles) from the Users directory; also covers the *"Adding services offered on the personal profile"* (edit-on-behalf) intent. See the dedicated Phase 2 entry below.
+11. Administration panel for managing the application (reports / support / requests / analytics).
+12. Business reports (exportable). — ⏳ **Item 2 (next)**.
 
-**Note:** **Payments** are explicitly deferred — the user is unsure whether a PayPal service is required or whether it will be removed entirely; confirm before building anything payment-related.
+Recommended order to propose to the user: analytics/dashboard + user administration → job moderation → reviews moderation → business reports (exportable) → per-user business execution analytics.
+
+#### ✅ Admin — Phase 2, Item 1: User profile admin detail/edit (DONE)
+- Tapping a user row in **Users** now opens a **`UserProfileScreen`** (detail + edit), extending the existing Users module with the project items *"Adding services offered on the personal profile"* (via admin edit) and *"Editing a user profile"* (items 8 & 10).
+- **Detail view:** avatar initials, full name, `@username`, contact info (email, phone), city, gender, active/inactive badge, assigned-role chips, and bio.
+- **Edit (modal bottom sheet):** first/last name, email, phone, bio, **gender & city dropdowns** (from `GET /Gender`, `GET /City`), an **active** switch, and **assign/remove roles** via `FilterChip`s (from `GET /Role`). Save persists via the existing `PUT /Users/{id}` and refreshes both the detail view and the Users directory.
+- **No backend change** — reuses `GET /Users/{id}`, `PUT /Users/{id}`, `GET /Gender`, `GET /City`, `GET /Role`.
+- **New files:** `models/gender_option.dart`, `models/city_option.dart`, `models/user_update_payload.dart` (`UserUpdatePayload` mirrors `UserUpsertRequest` so role assignments are never wiped on update), `screens/user_profile_screen.dart`, `test/user_profile_screen_test.dart`.
+- **Modified:** `admin_repository.dart` (`fetchUserById`, `updateUser`, `fetchGenders`, `fetchCities`, `fetchRoles`), `admin_provider.dart` (user-detail state + `loadUserDetail`/`loadLookups`/`updateUser`), `users_screen.dart` (tappable rows with chevron → `UserProfileScreen`).
+- **Verification:** `flutter analyze` → **0 issues**; offline widget tests → **3 pass** (2 new + 1 existing); `flutter build windows --debug` builds `quickwork_admin.exe`.
+- Committed by user.
+
+**Notes / caveats:**
+- **Payments are deferred** (user unsure whether PayPal is required or removed entirely) — confirm before building anything payment-related.
+- **Payments & Notifications** — DbSets exist but there are **no `PaymentService`/`NotificationService` controllers** yet. Don't assume those endpoints exist; natural admin territory but confirm scope and flag any backend build/migration (user's side).
+- **Job `status` values:** `Open, InProgress, Completed, Cancelled`; application statuses `Pending, Accepted, Rejected, Withdrawn`.
+- **Admin seed user:** `berinm` / `test` with the `Administrator` role. Gate admin screens on `user.hasRole('Administrator')`.
+- Base URL / auth / self-signed cert handling identical to Mobile/Desktop.
