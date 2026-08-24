@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../admin/screens/dashboard_screen.dart';
 import '../../admin/screens/jobs_screen.dart';
+import '../../admin/screens/notifications_screen.dart';
 import '../../admin/screens/reports_screen.dart';
 import '../../admin/screens/reviews_screen.dart';
 import '../../admin/screens/users_screen.dart';
@@ -30,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
     UsersScreen(),
     JobsScreen(),
     ReviewsScreen(),
+    NotificationsScreen(),
     ReportsScreen(),
   ];
 
@@ -133,6 +135,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: Text('Reviews'),
                 ),
                 NavigationRailDestination(
+                  icon: Icon(Icons.notifications_outlined),
+                  selectedIcon: Icon(Icons.notifications),
+                  label: Text('Notify'),
+                ),
+                NavigationRailDestination(
                   icon: Icon(Icons.assessment_outlined),
                   selectedIcon: Icon(Icons.assessment),
                   label: Text('Reports'),
@@ -171,6 +178,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.star_outline),
                   label: 'Reviews',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.notifications_outlined),
+                  label: 'Notify',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.assessment_outlined),

@@ -7,6 +7,8 @@ import '../models/admin_job_posting_model.dart';
 import '../models/admin_review_model.dart';
 import '../models/city_option.dart';
 import '../models/gender_option.dart';
+import '../models/notification_model.dart';
+import '../models/notification_payload.dart';
 import '../models/user_response_model.dart' show AdminUserModel;
 import '../models/user_activation_payload.dart';
 import '../models/user_update_payload.dart';
@@ -252,6 +254,63 @@ class AdminRepository {
           .whereType<Map<String, dynamic>>()
           .map(CategoryModel.fromJson)
           .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Notifications (announcements)
+  // ---------------------------------------------------------------------------
+
+  /// Fetches the most recent notifications (the service orders by createdAt
+  /// descending). [pageSize] is used to limit history to the latest N.
+  Future<List<AdminNotificationModel>> fetchNotifications({
+    int? userId,
+    int? page,
+    int? pageSize,
+  }) async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/Notifications',
+        queryParameters: {
+          if (userId != null) 'UserId': userId,
+          if (page != null) 'Page': page,
+          'PageSize': pageSize ?? 10,
+          'IncludeTotalCount': true,
+        },
+      );
+
+      final items = response.data?['items'] as List<dynamic>? ?? [];
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(AdminNotificationModel.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Creates a notification for a single [payload.userId] via
+  /// `POST /Notifications`. Returns the created notification.
+  Future<AdminNotificationModel> createNotification(
+    NotificationPayload payload,
+  ) async {
+    try {
+      final response = await _apiClient.dio.post<Map<String, dynamic>>(
+        '/Notifications',
+        data: payload.toJson(),
+      );
+      return AdminNotificationModel.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Removes (hard-deletes) a notification via `DELETE /Notifications/{id}`.
+  Future<void> deleteNotification(int id) async {
+    try {
+      await _apiClient.dio.delete<Map<String, dynamic>>('/Notifications/$id');
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

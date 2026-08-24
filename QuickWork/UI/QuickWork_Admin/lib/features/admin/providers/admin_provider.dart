@@ -9,6 +9,8 @@ import '../models/admin_review_model.dart';
 import '../models/category_model.dart';
 import '../models/city_option.dart';
 import '../models/gender_option.dart';
+import '../models/notification_model.dart';
+import '../models/notification_payload.dart';
 import '../models/report_models.dart';
 import '../models/user_response_model.dart';
 import '../models/user_activation_payload.dart';
@@ -104,6 +106,16 @@ class AdminProvider extends ChangeNotifier {
   String? _lastExportPath;
   final CsvExportService _csvExport = CsvExportService();
 
+  // ---- Notifications --------------------------------------------------------
+  List<AdminNotificationModel> _notifications = [];
+  bool _isLoadingNotifications = false;
+  String? _notificationsError;
+  bool _isSendingNotification = false;
+  String? _sendMessage;
+  int _sendProgress = 0;
+  int _sendTotal = 0;
+  bool _isDeletingNotification = false;
+
   // ---- Getters --------------------------------------------------------------
   DashboardSummary get summary => _summary;
   List<CategoryOverviewItem> get categoryOverview => _categoryOverview;
@@ -141,6 +153,15 @@ class AdminProvider extends ChangeNotifier {
   bool get isExporting => _isExporting;
   String? get exportMessage => _exportMessage;
   String? get lastExportPath => _lastExportPath;
+
+  List<AdminNotificationModel> get notifications => _notifications;
+  bool get isLoadingNotifications => _isLoadingNotifications;
+  String? get notificationsError => _notificationsError;
+  bool get isSendingNotification => _isSendingNotification;
+  String? get sendMessage => _sendMessage;
+  int get sendProgress => _sendProgress;
+  int get sendTotal => _sendTotal;
+  bool get isDeletingNotification => _isDeletingNotification;
 
   // ---------------------------------------------------------------------------
   // Reports (Phase 2, Item 2)
@@ -349,6 +370,103 @@ class AdminProvider extends ChangeNotifier {
       _exportMessage = 'Export failed: $e';
     }
     notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Notifications (announcements)
+  // ---------------------------------------------------------------------------
+
+  /// Loads the most recent notifications (last N) for the history list.
+  Future<void> loadNotifications({int pageSize = 10}) async {
+    _isLoadingNotifications = true;
+    _notificationsError = null;
+    notifyListeners();
+
+    try {
+      _notifications =
+          await _repository.fetchNotifications(pageSize: pageSize);
+      _isLoadingNotifications = false;
+    } catch (e) {
+      _isLoadingNotifications = false;
+      _notificationsError = e.toString();
+    }
+    notifyListeners();
+  }
+
+  /// Sends an announcement to **every** user.
+  ///
+  /// The backend `POST /Notifications` only accepts a single `UserId`, so the
+  /// broadcast is a client-side fan-out: fetch all users, then create one
+  /// notification per user. On success the history is refreshed.
+  Future<bool> sendAnnouncement({
+    required String title,
+    required String message,
+    String type = 'announcement',
+  }) async {
+    _isSendingNotification = true;
+    _sendMessage = null;
+    _sendProgress = 0;
+    _sendTotal = 0;
+    notifyListeners();
+
+    try {
+      final allUsers = await _repository.fetchUsers(pageSize: 500);
+      _sendTotal = allUsers.length;
+
+      var sent = 0;
+      var failed = 0;
+      for (final user in allUsers) {
+        try {
+          await _repository.createNotification(
+            NotificationPayload(
+              userId: user.id,
+              type: type,
+              title: title,
+              message: message,
+            ),
+          );
+          sent++;
+        } catch (_) {
+          failed++;
+        }
+        _sendProgress = sent + failed;
+        notifyListeners();
+      }
+
+      _isSendingNotification = false;
+      _sendMessage = 'Announcement sent to $sent user(s)'
+          '${failed > 0 ? ' ($failed failed)' : ''}.';
+      notifyListeners();
+
+      // Refresh history so the latest sends show up.
+      await loadNotifications();
+      return failed == 0;
+    } catch (e) {
+      _isSendingNotification = false;
+      _sendMessage = 'Could not send announcement: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Removes a notification and refreshes the history.
+  Future<bool> deleteNotification(AdminNotificationModel notification) async {
+    _isDeletingNotification = true;
+    notifyListeners();
+
+    try {
+      await _repository.deleteNotification(notification.id);
+      _notifications =
+          _notifications.where((n) => n.id != notification.id).toList();
+      _isDeletingNotification = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isDeletingNotification = false;
+      _notificationsError = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 
   // ---------------------------------------------------------------------------
