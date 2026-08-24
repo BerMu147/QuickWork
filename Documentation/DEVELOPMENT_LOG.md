@@ -269,7 +269,7 @@ Three user-reported bugs were fixed in the Mobile app (`QuickWork/UI/QuickWork_M
 Scope (from project requirements), to confirm/refine with the user module by module:
 1. Overview by job offer / job demand categories (analytics). — ✅ **done (Phase 1 dashboard)**; can extend.
 2. Adding new jobs / services.
-3. Sending relevant notifications to users.
+3. Sending relevant notifications to users. — ✅ **done (Notifications / announcements module, Phase 2 item 3)** — see the dedicated Phase 2 entry below.
 4. Communication between users via messages.
 5. Sending a request for a requested job / offered service.
 6. Job request confirmation.
@@ -305,9 +305,24 @@ Recommended order to propose to the user: analytics/dashboard + user administrat
 - **Verification:** `flutter analyze` → **0 issues**; offline widget tests → **8 pass** (5 new + 2 profile + 1 existing, clean exit — no timeout); `flutter build windows --debug` builds `quickwork_admin.exe`.
 - Committed by user.
 
+#### ✅ Admin — Phase 2, Item 3: Notifications / announcements (DONE)
+- Added a **Notifications** module — a new nav destination ("Notify", rail + bottom bar) opening a screen that lets an admin **send an announcement to all users** (downtime / maintenance notices) and review the **most recent notifications** sent.
+- **Scope decided with the user:**
+  - **Single-user notifications stay with the app** — the user app notifies one user at a time (job accepted, message, etc.); the backend `POST /Notifications` requires a single `UserId`, so that stays the Mobile/Desktop app's concern.
+  - **Admin feature = broadcast** — a compose card (Title + Message) with a **"Send to all users"** button. Implementation is a **client-side fan-out** (the controller accepts only one `UserId`): fetch all users (`GET /Users`), then `POST /Notifications` once per user, with live progress (`Sending to X / Y users…`). **No backend change.**
+  - **Notification type** defaults to `"announcement"` (kept editable in the provider signature) — checked the Mobile/Desktop apps and **no client app consumes `/Notifications` yet** (in-app notifications bell is still parked per `PUSH_NOTIFICATIONS_DESIGN.md`), so there was no existing type convention to align with.
+  - **History = last 10** — via `GET /Notifications?PageSize=10` (service orders by `CreatedAt` descending); each row shows title, message, recipient (`User #id`), and timestamp, plus a **delete** button (`DELETE /Notifications/{id}`) as a moderation affordance.
+- **No backend change** — reuses `/Users` + `/Notifications` endpoints only.
+- **New files:** `models/notification_model.dart` (`AdminNotificationModel` → `NotificationResponse`), `models/notification_payload.dart` (`NotificationPayload` → `NotificationUpsertRequest`), `screens/notifications_screen.dart`, `test/notifications_screen_test.dart`.
+- **Modified:** `admin_repository.dart` (`fetchNotifications`, `createNotification`, `deleteNotification`), `admin_provider.dart` (notification state/getters + `loadNotifications()`, `sendAnnouncement()`, `deleteNotification()`), `home_screen.dart` (added **Notify** destination to the rail, bottom bar, and `_tabs`).
+- **Tests:** 4 new — screen render/empty history, announcement fan-out to every user (asserts one `POST` per user), empty-field validation, history display + delete.
+- **Verification:** `flutter analyze` → **0 issues**; offline widget tests → **12 pass** (4 new + 8 existing), clean exit; `flutter build windows --debug` builds `quickwork_admin.exe`.
+- Committed by user.
+
 **Notes / caveats:**
 - **Payments are deferred** (user unsure whether PayPal is required or removed entirely) — confirm before building anything payment-related.
-- **Payments & Notifications** — DbSets exist but there are **no `PaymentService`/`NotificationService` controllers** yet. Don't assume those endpoints exist; natural admin territory but confirm scope and flag any backend build/migration (user's side).
+- **Payments** — DbSet exists but there is **no `PaymentService` controller** yet; do not assume the payments endpoint exists (deferred — user deciding on PayPal).
+- **Notifications** — `NotificationService.cs` + `NotificationsController.cs` **DO exist and are fully implemented** (verified: `GET/POST`, `GET/{id}`, `PATCH /{id}/mark-as-read`, `PATCH /mark-all-as-read/{userId}`, `DELETE`). `POST /Notifications` requires a single `UserId`, so admin "broadcast to all" is a **client-side fan-out** (no backend change).
 - **Job `status` values:** `Open, InProgress, Completed, Cancelled`; application statuses `Pending, Accepted, Rejected, Withdrawn`.
 - **Admin seed user:** `berinm` / `test` with the `Administrator` role. Gate admin screens on `user.hasRole('Administrator')`.
 - Base URL / auth / self-signed cert handling identical to Mobile/Desktop.
