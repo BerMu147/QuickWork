@@ -270,9 +270,9 @@ Scope (from project requirements), to confirm/refine with the user module by mod
 1. Overview by job offer / job demand categories (analytics). — ✅ **done (Phase 1 dashboard)**; can extend.
 2. Adding new jobs / services. — **superseded** — admin does **not** publish on behalf of users; instead admin **views & deletes** user-posted jobs (done: Phase 2 Item 2-LITE — see the dedicated entry below).
 3. Sending relevant notifications to users. — ✅ **done (Notifications / announcements module, Phase 2 item 3)** — see the dedicated Phase 2 entry below.
-4. Communication between users via messages.
-5. Sending a request for a requested job / offered service.
-6. Job request confirmation.
+4. Communication between users via messages. — **skipped by user decision** — a read-only admin "view messages" screen adds no real moderation capability (no thread abstraction; job-delete already cascades a job's messages; no intervention power). Revisit only if a genuine flag/remove-message moderation workflow is requested.
+5. Sending a request for a requested job / offered service. — **done as admin oversight (Phase 2 Items 5 & 6)** — the worker-request (job-application) flow stays user-facing (apply in the apps, Accept/Reject by the publisher); the admin gets a **Requests** oversight screen (view + status filter + delete moderation). See the dedicated Phase 2 entry below.
+6. Job request confirmation. — covered by the same **Requests** module above (statuses Pending/Accepted/Rejected visible to the admin; the confirmation itself stays with the publisher).
 7. Connecting users and work duties.
 8. Adding services offered on the personal profile.
 9. Business execution analytics (user profile).
@@ -327,6 +327,19 @@ Recommended order to propose to the user: analytics/dashboard + user administrat
 - **Modified:** `admin_repository.dart` (`deleteJob(id)` → `DELETE /JobPostings/{id}`), `admin_provider.dart` (`isDeletingJob`/`jobDeleteError` state + `deleteJob(AdminJobPostingModel)` which drops the row from `_jobs` on success), `jobs_screen.dart` (`_JobTile` gained an `onDelete`/`deleting` pair + the trailing delete button + `_confirmAndDelete`).
 - **Tests:** new `test/jobs_screen_test.dart` — 4 tests (delete action present on every row; confirmation dialog shown + cancel keeps the row; confirming removes the job; failure keeps the row + shows the error).
 - **Verification:** `flutter analyze` → **0 issues**; offline widget tests → **16 pass** (4 new + 12 existing); `flutter build windows --debug` builds `quickwork_admin.exe`.
+- Committed by user.
+
+#### ✅ Admin — Phase 2, Items 5 & 6: Job requests oversight (worker requests / confirmation) (DONE)
+- Added a **Requests** module — a new nav destination ("Requests", rail + bottom bar) that gives the admin **oversight of job applications / worker requests** (project items 5 & 6 territory).
+- **Scope decided with the user:**
+  - **Request/confirmation stays user-facing** — a worker applying for a job (Item 5) and the publisher Accept/Reject (Item 6) remain in the Mobile/Desktop apps; the admin does **not** act on behalf of publishers.
+  - **Admin value = oversight + moderation** — the **Requests** screen lists every job application across the platform: the **worker** (applicant) requesting, the **job** they applied to, their application **message**, current **status** (`Pending/Accepted/Rejected/Withdrawn`), and applied date. Filterable by **status** (e.g. see all pending requests awaiting publisher confirmation).
+  - **Delete moderation (confirmed with user)** — a red **delete** icon per row with a confirmation dialog, `DELETE /JobApplications/{id}` (hard delete). Rationale: a publisher may accidentally accept the wrong applicant; the admin can remove such a request. Mirrors the Jobs/Reviews delete pattern.
+- **No backend change** — reuses `GET /JobApplications` (client-side status filtering, backend `JobApplicationSearchObject` has a `Status` filter) + the existing `DELETE /JobApplications/{id}`.
+- **New files:** `models/admin_job_application_model.dart` (`AdminJobApplicationModel` → `JobApplicationResponse`), `screens/requests_screen.dart` (status filter chips + request list + delete confirmation), `test/requests_screen_test.dart`.
+- **Modified:** `admin_repository.dart` (`fetchJobApplications`, `deleteJobApplication`), `admin_provider.dart` (job-application state/getters + `loadJobApplications()`/`deleteJobApplication()`), `home_screen.dart` (added **Requests** destination to the rail, bottom bar, and `_tabs`).
+- **Tests:** 4 new — rows + status filter, confirmation dialog + cancel keeps row, confirming removes the request, failed delete keeps row + shows error.
+- **Verification:** `flutter analyze` → **0 issues**; offline widget tests → **20 pass** (4 new + 16 existing); `flutter build windows --debug` builds `quickwork_admin.exe`.
 - Committed by user.
 
 **Notes / caveats:**
