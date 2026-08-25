@@ -193,6 +193,18 @@ class AdminRepository {
     }
   }
 
+  /// Removes (hard-deletes) a job posting via `DELETE /JobPostings/{id}`.
+  ///
+  /// The backend cascades to the job's applications, messages, reviews and
+  /// payments (their FK relationships use `DeleteBehavior.Cascade`).
+  Future<void> deleteJob(int id) async {
+    try {
+      await _apiClient.dio.delete<Map<String, dynamic>>('/JobPostings/$id');
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Reviews (moderation)
   // ---------------------------------------------------------------------------

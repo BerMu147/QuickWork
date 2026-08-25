@@ -41,6 +41,45 @@ class _JobsScreenState extends State<JobsScreen> {
     await context.read<AdminProvider>().loadJobs(status: _selectedStatus);
   }
 
+  Future<void> _confirmAndDelete(AdminJobPostingModel job) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete job'),
+        content: Text(
+          'Delete "${job.title}"?\n\n'
+          'This permanently removes the job and its applications, messages, '
+          'reviews and payments. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final admin = context.read<AdminProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final success = await admin.deleteJob(job);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          success ? 'Job deleted.' : 'Failed to delete job.',
+        ),
+        backgroundColor: success ? Colors.green : Colors.red,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<AdminProvider>();
@@ -104,7 +143,11 @@ class _JobsScreenState extends State<JobsScreen> {
                                   const Divider(height: 1),
                               itemBuilder: (context, index) {
                                 final job = admin.jobs[index];
-                                return _JobTile(job: job);
+                                return _JobTile(
+                                  job: job,
+                                  onDelete: () => _confirmAndDelete(job),
+                                  deleting: admin.isDeletingJob,
+                                );
                               },
                             ),
                           ),
@@ -116,9 +159,15 @@ class _JobsScreenState extends State<JobsScreen> {
 }
 
 class _JobTile extends StatelessWidget {
-  const _JobTile({required this.job});
+  const _JobTile({
+    required this.job,
+    required this.onDelete,
+    required this.deleting,
+  });
 
   final AdminJobPostingModel job;
+  final VoidCallback onDelete;
+  final bool deleting;
 
   @override
   Widget build(BuildContext context) {
@@ -145,29 +194,42 @@ class _JobTile extends StatelessWidget {
         ),
       ),
       isThreeLine: true,
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              job.status,
-              style: TextStyle(
-                color: statusColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  job.status,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 4),
+              Text(
+                '${job.paymentAmount.toStringAsFixed(0)} KM',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            '${job.paymentAmount.toStringAsFixed(0)} KM',
-            style: const TextStyle(fontWeight: FontWeight.w600),
+          IconButton(
+            tooltip: 'Delete job',
+            onPressed: deleting ? null : onDelete,
+            icon: Icon(
+              Icons.delete_outline,
+              color: deleting ? Colors.grey : Colors.red,
+            ),
           ),
         ],
       ),

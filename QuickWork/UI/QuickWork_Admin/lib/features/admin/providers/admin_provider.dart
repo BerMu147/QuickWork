@@ -76,6 +76,8 @@ class AdminProvider extends ChangeNotifier {
   List<AdminJobPostingModel> _jobs = [];
   bool _isLoadingJobs = false;
   String? _jobsError;
+  bool _isDeletingJob = false;
+  String? _jobDeleteError;
 
   // ---- Reviews (moderation) -------------------------------------------------
   List<AdminReviewModel> _reviews = [];
@@ -129,6 +131,8 @@ class AdminProvider extends ChangeNotifier {
   List<AdminJobPostingModel> get jobs => _jobs;
   bool get isLoadingJobs => _isLoadingJobs;
   String? get jobsError => _jobsError;
+  bool get isDeletingJob => _isDeletingJob;
+  String? get jobDeleteError => _jobDeleteError;
 
   List<AdminReviewModel> get reviews => _reviews;
   bool get isLoadingReviews => _isLoadingReviews;
@@ -666,6 +670,30 @@ class AdminProvider extends ChangeNotifier {
       _jobsError = e.toString();
     }
     notifyListeners();
+  }
+
+  /// Removes (hard-deletes) a user-posted job and its cascaded data
+  /// (applications, messages, reviews, payments) via `DELETE /JobPostings/{id}`.
+  ///
+  /// On success the job is dropped from the local list; on failure the row is
+  /// kept and [jobDeleteError] is set.
+  Future<bool> deleteJob(AdminJobPostingModel job) async {
+    _isDeletingJob = true;
+    _jobDeleteError = null;
+    notifyListeners();
+
+    try {
+      await _repository.deleteJob(job.id);
+      _jobs = _jobs.where((j) => j.id != job.id).toList();
+      _isDeletingJob = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isDeletingJob = false;
+      _jobDeleteError = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 
   // ---------------------------------------------------------------------------
