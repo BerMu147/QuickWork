@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../admin/screens/dashboard_screen.dart';
 import '../../admin/screens/jobs_screen.dart';
+import '../../admin/screens/market_screen.dart';
 import '../../admin/screens/notifications_screen.dart';
 import '../../admin/screens/reports_screen.dart';
 import '../../admin/screens/requests_screen.dart';
@@ -35,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ReviewsScreen(),
     NotificationsScreen(),
     ReportsScreen(),
+    MarketScreen(),
   ];
 
   /// Breakpoint above which the left-hand [NavigationRail] is used.
@@ -151,6 +153,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   selectedIcon: Icon(Icons.assessment),
                   label: Text('Reports'),
                 ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.insights_outlined),
+                  selectedIcon: Icon(Icons.insights),
+                  label: Text('Market'),
+                ),
               ],
             ),
           Expanded(
@@ -197,6 +204,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.assessment_outlined),
                   label: 'Reports',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.insights_outlined),
+                  label: 'Market',
                 ),
               ],
             ),

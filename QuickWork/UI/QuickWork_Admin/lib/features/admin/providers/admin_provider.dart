@@ -10,6 +10,7 @@ import '../models/admin_review_model.dart';
 import '../models/category_model.dart';
 import '../models/city_option.dart';
 import '../models/gender_option.dart';
+import '../models/market_analytics_model.dart';
 import '../models/notification_model.dart';
 import '../models/notification_payload.dart';
 import '../models/report_models.dart';
@@ -126,6 +127,11 @@ class AdminProvider extends ChangeNotifier {
   int _sendTotal = 0;
   bool _isDeletingNotification = false;
 
+  // ---- Market / Analytics ---------------------------------------------------
+  MarketAnalyticsData _marketAnalytics = const MarketAnalyticsData();
+  bool _isLoadingMarket = false;
+  String? _marketError;
+
   // ---- Getters --------------------------------------------------------------
   DashboardSummary get summary => _summary;
   List<CategoryOverviewItem> get categoryOverview => _categoryOverview;
@@ -180,6 +186,188 @@ class AdminProvider extends ChangeNotifier {
   int get sendProgress => _sendProgress;
   int get sendTotal => _sendTotal;
   bool get isDeletingNotification => _isDeletingNotification;
+
+  MarketAnalyticsData get marketAnalytics => _marketAnalytics;
+  bool get isLoadingMarket => _isLoadingMarket;
+  String? get marketError => _marketError;
+
+  // ---------------------------------------------------------------------------
+  // Market / Analytics (Phase 2, Item 7)
+  // ---------------------------------------------------------------------------
+
+  /// Loads the market / matching analytics from the existing read endpoints
+  /// (`/Users`, `/Role`, `/JobPostings`, `/JobApplications`, `/Category`).
+  ///
+  /// No dedicated backend endpoint exists, so everything is aggregated
+  /// client-side over the paginated collections.
+  Future<void> loadMarketAnalytics() async {
+    _isLoadingMarket = true;
+    _marketError = null;
+    notifyListeners();
+
+    try {
+      final results = await Future.wait<Object>([
+        _repository.fetchUsers(pageSize: 500),
+        _repository.fetchRoles(),
+        _repository.fetchJobPostings(pageSize: 500),
+        _repository.fetchJobApplications(pageSize: 500),
+        _repository.fetchCategories(),
+      ]);
+
+      final allUsers = (results[0] as List<AdminUserModel>);
+      final roles = (results[1] as List<RoleModel>);
+      final allJobs = (results[2] as List<AdminJobPostingModel>);
+      final allApplications = (results[3] as List<AdminJobApplicationModel>);
+      final categories = (results[4] as List<CategoryModel>);
+
+      _marketAnalytics = _buildMarketAnalytics(
+        users: allUsers,
+        roles: roles,
+        jobs: allJobs,
+        applications: allApplications,
+        categories: categories,
+      );
+      _isLoadingMarket = false;
+    } catch (e) {
+      _isLoadingMarket = false;
+      _marketError = e.toString();
+    }
+    notifyListeners();
+  }
+
+  MarketAnalyticsData _buildMarketAnalytics({
+    required List<AdminUserModel> users,
+    required List<RoleModel> roles,
+    required List<AdminJobApplicationModel> applications,
+    required List<AdminJobPostingModel> jobs,
+    required List<CategoryModel> categories,
+  }) {
+    String normalize(String s) => s.toLowerCase();
+
+    // --- Matching KPIs ------------------------------------------------------
+    final openJobs =
+        jobs.where((j) => normalize(j.status) == 'open').toList();
+    final totalOpenJobs = openJobs.length;
+    final totalApplications = applications.length;
+
+    final pending = applications
+        .where((a) => normalize(a.status) == 'pending')
+        .length;
+    final accepted = applications
+        .where((a) => normalize(a.status) == 'accepted')
+        .length;
+    final rejected = applications
+        .where((a) => normalize(a.status) == 'rejected')
+        .length;
+
+    // Average applications per open job (= supply meeting demand per listing).
+    final avgPerOpenJob =
+        totalOpenJobs == 0 ? 0.0 : totalApplications / totalOpenJobs;
+
+    // --- Underserved demand: open jobs with 0 applications -------------------
+    // Compare the application count reported on each job against the actual
+    // application rows we loaded. Use the greater of the two so a job with
+    // applications that fall outside our 500-page window is not flagged as
+    // underserved. Underserved == an open job with no applications at all.
+    final underServed = <UnderServedJobRow>[];
+    for (final job in openJobs) {
+      final actualCount =
+          applications.where((a) => a.jobPostingId == job.id).length;
+      final effectiveCount =
+          actualCount > job.applicationCount ? actualCount : job.applicationCount;
+      if (effectiveCount == 0) {
+        underServed.add(
+          UnderServedJobRow(
+            id: job.id,
+            title: job.title,
+            categoryName: job.categoryName,
+            cityName: job.cityName,
+            applicationCount: 0,
+            paymentAmount: job.paymentAmount,
+          ),
+        );
+      }
+    }
+    underServed.sort((a, b) => b.paymentAmount.compareTo(a.paymentAmount));
+
+    // --- Demand concentration by category -------------------------------------
+    final categoryDemand = <CategoryDemandRow>[];
+    for (final cat in categories) {
+      final catJobs = jobs.where((j) => j.categoryId == cat.id).toList();
+      final catOpen = catJobs.where((j) => normalize(j.status) == 'open').length;
+      final catApplications = applications
+          .where((a) => catJobs.any((j) => j.id == a.jobPostingId))
+          .length;
+      if (catOpen > 0 || catApplications > 0) {
+        categoryDemand.add(
+          CategoryDemandRow(
+            category: cat.name,
+            openJobs: catOpen,
+            totalJobs: catJobs.length,
+            applications: catApplications,
+          ),
+        );
+      }
+    }
+    categoryDemand.sort(
+        (a, b) => b.openJobs != a.openJobs
+            ? b.openJobs.compareTo(a.openJobs)
+            : b.applications.compareTo(a.applications),
+    );
+
+    // --- Demand concentration by city -----------------------------------------
+    final cityNames = <String>{
+      for (final j in jobs)
+        if (j.cityName.isNotEmpty) j.cityName,
+    };
+    final cityDemand = <CityDemandRow>[];
+    for (final city in cityNames) {
+      final cityJobs = jobs.where((j) => j.cityName == city).toList();
+      final cityOpen =
+          cityJobs.where((j) => normalize(j.status) == 'open').length;
+      final cityApplications = applications
+          .where((a) => cityJobs.any((j) => j.id == a.jobPostingId))
+          .length;
+      cityDemand.add(
+        CityDemandRow(
+          city: city,
+          openJobs: cityOpen,
+          totalJobs: cityJobs.length,
+          applications: cityApplications,
+        ),
+      );
+    }
+    cityDemand.sort((a, b) => b.openJobs.compareTo(a.openJobs));
+
+    // --- Labor supply by role ---------------------------------------------------
+    // Active, distinct workers (users with a role containing "worker").
+    final laborSupply = <LaborSupplyRow>[];
+    for (final role in roles) {
+      if (!normalize(role.name).contains('worker')) continue;
+      final activeWorkers = users
+          .where((u) =>
+              u.isActive && u.roles.any((r) => normalize(r.name).contains('worker')))
+          .length;
+      laborSupply.add(LaborSupplyRow(role: role.name, activeWorkers: activeWorkers));
+    }
+    laborSupply.sort((a, b) => b.activeWorkers.compareTo(a.activeWorkers));
+
+    return MarketAnalyticsData(
+      totalOpenJobs: totalOpenJobs,
+      totalApplications: totalApplications,
+      pendingApplications: pending,
+      acceptedApplications: accepted,
+      rejectedApplications: rejected,
+      activeWorkers: laborSupply.fold<int>(
+          0, (sum, r) => sum + r.activeWorkers),
+      averageApplicationsPerOpenJob: avgPerOpenJob,
+      avgOpenJobApplicationsOverride: avgPerOpenJob,
+      underServedJobs: underServed,
+      categoryDemand: categoryDemand,
+      cityDemand: cityDemand,
+      laborSupply: laborSupply,
+    );
+  }
 
   // ---------------------------------------------------------------------------
   // Reports (Phase 2, Item 2)
