@@ -5,6 +5,7 @@ import '../../admin/screens/dashboard_screen.dart';
 import '../../admin/screens/jobs_screen.dart';
 import '../../admin/screens/notifications_screen.dart';
 import '../../admin/screens/reports_screen.dart';
+import '../../admin/screens/requests_screen.dart';
 import '../../admin/screens/reviews_screen.dart';
 import '../../admin/screens/users_screen.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -30,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
     DashboardScreen(),
     UsersScreen(),
     JobsScreen(),
+    RequestsScreen(),
     ReviewsScreen(),
     NotificationsScreen(),
     ReportsScreen(),
@@ -130,6 +132,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: Text('Jobs'),
                 ),
                 NavigationRailDestination(
+                  icon: Icon(Icons.post_add_outlined),
+                  selectedIcon: Icon(Icons.post_add),
+                  label: Text('Requests'),
+                ),
+                NavigationRailDestination(
                   icon: Icon(Icons.star_outline),
                   selectedIcon: Icon(Icons.star),
                   label: Text('Reviews'),
@@ -174,6 +181,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.work_outline),
                   label: 'Jobs',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.post_add_outlined),
+                  label: 'Requests',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.star_outline),

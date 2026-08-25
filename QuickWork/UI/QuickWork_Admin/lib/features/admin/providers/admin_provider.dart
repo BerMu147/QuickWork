@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../auth/models/role_model.dart';
 import '../data/admin_repository.dart';
+import '../models/admin_job_application_model.dart';
 import '../models/admin_job_posting_model.dart';
 import '../models/admin_review_model.dart';
 import '../models/category_model.dart';
@@ -79,6 +80,13 @@ class AdminProvider extends ChangeNotifier {
   bool _isDeletingJob = false;
   String? _jobDeleteError;
 
+  // ---- Job applications (worker requests — oversight / moderation) ----------
+  List<AdminJobApplicationModel> _jobApplications = [];
+  bool _isLoadingJobApplications = false;
+  String? _jobApplicationsError;
+  bool _isDeletingJobApplication = false;
+  String? _jobApplicationDeleteError;
+
   // ---- Reviews (moderation) -------------------------------------------------
   List<AdminReviewModel> _reviews = [];
   bool _isLoadingReviews = false;
@@ -133,6 +141,12 @@ class AdminProvider extends ChangeNotifier {
   String? get jobsError => _jobsError;
   bool get isDeletingJob => _isDeletingJob;
   String? get jobDeleteError => _jobDeleteError;
+
+  List<AdminJobApplicationModel> get jobApplications => _jobApplications;
+  bool get isLoadingJobApplications => _isLoadingJobApplications;
+  String? get jobApplicationsError => _jobApplicationsError;
+  bool get isDeletingJobApplication => _isDeletingJobApplication;
+  String? get jobApplicationDeleteError => _jobApplicationDeleteError;
 
   List<AdminReviewModel> get reviews => _reviews;
   bool get isLoadingReviews => _isLoadingReviews;
@@ -691,6 +705,52 @@ class AdminProvider extends ChangeNotifier {
     } catch (e) {
       _isDeletingJob = false;
       _jobDeleteError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Job applications (worker requests — oversight / moderation)
+  // ---------------------------------------------------------------------------
+
+  /// Loads job applications (worker requests) with an optional [status] filter.
+  Future<void> loadJobApplications({String? status}) async {
+    _isLoadingJobApplications = true;
+    _jobApplicationsError = null;
+    notifyListeners();
+
+    try {
+      final result =
+          await _repository.fetchJobApplications(status: status, pageSize: 200);
+      _jobApplications = result;
+      _isLoadingJobApplications = false;
+    } catch (e) {
+      _isLoadingJobApplications = false;
+      _jobApplicationsError = e.toString();
+    }
+    notifyListeners();
+  }
+
+  /// Removes (hard-deletes) a job application / request as a moderation action.
+  ///
+  /// On success the row is dropped from the local list; on failure it is kept
+  /// and [jobApplicationDeleteError] is set.
+  Future<bool> deleteJobApplication(AdminJobApplicationModel application) async {
+    _isDeletingJobApplication = true;
+    _jobApplicationDeleteError = null;
+    notifyListeners();
+
+    try {
+      await _repository.deleteJobApplication(application.id);
+      _jobApplications =
+          _jobApplications.where((a) => a.id != application.id).toList();
+      _isDeletingJobApplication = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isDeletingJobApplication = false;
+      _jobApplicationDeleteError = e.toString();
       notifyListeners();
       return false;
     }

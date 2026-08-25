@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exceptions.dart';
 import '../../auth/models/role_model.dart';
+import '../models/admin_job_application_model.dart';
 import '../models/admin_job_posting_model.dart';
 import '../models/admin_review_model.dart';
 import '../models/city_option.dart';
@@ -244,6 +245,52 @@ class AdminRepository {
   Future<void> deleteReview(int id) async {
     try {
       await _apiClient.dio.delete<Map<String, dynamic>>('/Reviews/$id');
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Job applications (worker requests — oversight / moderation)
+  // ---------------------------------------------------------------------------
+
+  /// Fetches job applications (worker requests) matching [filters].
+  /// Supports pagination and status filtering (`Pending`, `Accepted`, ...).
+  Future<List<AdminJobApplicationModel>> fetchJobApplications({
+    int? jobPostingId,
+    int? applicantUserId,
+    String? status,
+    int? page,
+    int? pageSize,
+  }) async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/JobApplications',
+        queryParameters: {
+          if (jobPostingId != null) 'JobPostingId': jobPostingId,
+          if (applicantUserId != null) 'ApplicantUserId': applicantUserId,
+          if (status != null && status.isNotEmpty) 'Status': status,
+          if (page != null) 'Page': page,
+          'PageSize': pageSize ?? 200,
+          'IncludeTotalCount': true,
+        },
+      );
+
+      final items = response.data?['items'] as List<dynamic>? ?? [];
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(AdminJobApplicationModel.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Removes (hard-deletes) a job application / request via
+  /// `DELETE /JobApplications/{id}`.
+  Future<void> deleteJobApplication(int id) async {
+    try {
+      await _apiClient.dio.delete<Map<String, dynamic>>('/JobApplications/$id');
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
