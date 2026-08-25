@@ -273,11 +273,11 @@ Scope (from project requirements), to confirm/refine with the user module by mod
 4. Communication between users via messages. — **skipped by user decision** — a read-only admin "view messages" screen adds no real moderation capability (no thread abstraction; job-delete already cascades a job's messages; no intervention power). Revisit only if a genuine flag/remove-message moderation workflow is requested.
 5. Sending a request for a requested job / offered service. — **done as admin oversight (Phase 2 Items 5 & 6)** — the worker-request (job-application) flow stays user-facing (apply in the apps, Accept/Reject by the publisher); the admin gets a **Requests** oversight screen (view + status filter + delete moderation). See the dedicated Phase 2 entry below.
 6. Job request confirmation. — covered by the same **Requests** module above (statuses Pending/Accepted/Rejected visible to the admin; the confirmation itself stays with the publisher).
-7. Connecting users and work duties.
+7. Connecting users and work duties. — ✅ **done (Market / matching analytics module, Phase 2 item 7)** — a Market destination showing labor-supply/demand analytics (KPIs, demand by category, top-applied jobs). See the dedicated Phase 2 entry below.
 8. Adding services offered on the personal profile.
-9. Business execution analytics (user profile).
+9. Business execution analytics (user profile). — ⏳ **remaining (next to build)** — per-user activity for admin decision-making. See the Item 9 scope note below.
 10. Editing a user profile. — ✅ **done (User Profile admin detail/edit module, Phase 2 item 1)** — admin can now view & edit any user's profile (name, email, phone, bio, gender, city, active flag, roles) from the Users directory; also covers the *"Adding services offered on the personal profile"* (edit-on-behalf) intent. See the dedicated Phase 2 entry below.
-11. Administration panel for managing the application (reports / support / requests / analytics).
+11. Administration panel for managing the application (reports / support / requests / analytics). — ✅ **done (Support ticketing module, Phase 2 item 11 — requires backend rebuild in VS)** — a Support destination with a full help-desk (ticket list, filters, admin reply, status lifecycle, soft-delete). See the dedicated Phase 2 entry below.
 12. Business reports (exportable). — ✅ **done (Business reports module, Phase 2 item 2)** — see the dedicated Phase 2 entry below.
 
 Recommended order to propose to the user: analytics/dashboard + user administration → job moderation → reviews moderation → business reports (exportable) → per-user business execution analytics.
@@ -342,9 +342,40 @@ Recommended order to propose to the user: analytics/dashboard + user administrat
 - **Verification:** `flutter analyze` → **0 issues**; offline widget tests → **20 pass** (4 new + 16 existing); `flutter build windows --debug` builds `quickwork_admin.exe`.
 - Committed by user.
 
+#### ✅ Admin — Phase 2, Item 7: Market / matching analytics (DONE)
+- Added a **Market** module — a new nav destination ("Market", rail + bottom bar) that gives the admin a **market / matching analytics** overview (project item 7, *"Connecting users and work duties"* — reframed as an admin market insight view rather than a per-user matching tool).
+- **Scope decided with the user:** the admin does **not** "connect" individual users to duties (that's inherently per-user and belongs in the user apps via matching/recommendations). Instead the admin gets **labor supply/demand analytics** over the whole platform.
+- **Aggregates shown:** KPI cards (total / job offers, active jobs, applications, matched applications, average rating) + a **hiring demand by category** breakdown + a **top-applied jobs** list by application count. Pull-to-refresh + loading / empty / error states.
+- **No backend change** — pure frontend aggregation over `/JobPostings`, `/JobApplications`, `/Users`, `/Category`.
+- **New files:** `models/market_analytics_model.dart` (`MarketAnalyticsData`), `screens/market_screen.dart`, `test/market_screen_test.dart`.
+- **Modified:** `admin_repository.dart` (`fetchMarketAnalytics`), `admin_provider.dart` (market state/getters + `loadMarketAnalytics()`), `home_screen.dart` (added **Market** destination to the rail, bottom bar, and `_tabs`).
+- **Tests:** new offline tests — KPIs + section headers render.
+- **Verification:** `flutter analyze` → **0 issues**; offline widget tests pass.
+- Committed by user (`0352b7b`).
+
+#### ✅ Admin — Phase 2, Item 11: Support ticketing / help-desk (DONE — **backend work**)
+- Added a **Support** module — a new nav destination ("Support", rail + bottom bar) that gives the admin a full help-desk to manage user-raised tickets (project item 11, part "support"). This is the **first admin feature that required backend work** (new entity/controller/migration, applied by the user in VS).
+- **Backend (new + modified, `dotnet build` → 0 errors):**
+  - New `Database/SupportTicket.cs` entity — `UserId, Subject, Message, Category, Priority, Status, AdminReply, CreatedAt, UpdatedAt, IsActive`. Lifecycle **`Open → InProgress → Resolved → Closed`**; **soft-delete** (`IsActive`) keeps an audit trail.
+  - New request/response/search: `SupportTicketUpsertRequest` (create), `SupportTicketReplyRequest` (admin reply + optional status), `SupportTicketStatusPayload` semantics, `SupportTicketResponse`, `SupportTicketSearchObject` (filter by user/status/priority/category, paged).
+  - New `ISupportTicketService` + `SupportTicketService` — paged/filtered/ordered-by-created-desc list; `Create`; `Reply` (auto-advances open/InProgress → Resolved unless another status is given, stores the admin note); `UpdateStatus`; `Delete` (soft).
+  - New `Controllers/SupportTicketsController.cs` — `GET`, `GET/{id}`, `POST`, `PATCH /{id}/reply`, `PATCH /{id}/status`, `DELETE /{id}`.
+  - Modified `QuickWorkDbContext.cs` (added `DbSet<SupportTicket> SupportTickets` + Fluent config: indexes on `UserId`, `Status`, `Priority`, `Category`, `CreatedAt`; FK to `Users` with `DeleteBehavior.Cascade`) and `Program.cs` (DI registration).
+  - **Migration generated:** `Migrations/20260825132519_AddSupportTickets.cs` (creates the table + 5 indexes + FK; clean `Down`). **⚠️ Requires the user to apply it** (`dotnet ef database update` or VS `Update-Database`) before the feature works against the live DB.
+- **Frontend (Flutter — analyze 0 issues):**
+  - New `models/admin_support_ticket_model.dart` (`AdminSupportTicketModel`) + `models/support_ticket_payloads.dart` (create / reply / status payloads → request shapes).
+  - New `screens/support_screen.dart` — **status filter chips** (`Open/InProgress/Resolved/Closed`) + ticket list (subject, user, date, **category·priority·status badges**, admin-reply display) + a **3-dot action menu** per ticket: **Reply/Resolve** (modal dialog showing the ticket, a reply text area, and a status dropdown), **Set status** (direct lifecycle advance), and **Delete** (confirmation dialog, soft-delete).
+  - Modified `admin_repository.dart` — `fetchSupportTickets`, `createSupportTicket`, `replySupportTicket`, `updateSupportTicketStatus`, `deleteSupportTicket` (hit `/SupportTickets`).
+  - Modified `admin_provider.dart` — support state/getters + `loadSupportTickets()`, `replyToSupportTicket()`, `updateSupportTicketStatus()`, `deleteSupportTicket()`.
+  - Modified `home_screen.dart` — added **Support** destination to the rail, bottom bar, and `_tabs` (now Dashboard, Users, Jobs, Requests, Reviews, Notify, Reports, Market, Support).
+  - New `test/support_screen_test.dart` — **5 offline tests** (provider load; rows + status render; status filter; reply advances status + stores note; delete removes + confirms).
+- **Verification:** `flutter analyze` → **0 issues**; offline widget tests → **30 pass** (25 existing + 5 new support); backend `dotnet build` → **0 errors**.
+- Committed by user (`b2f2274` frontend, `930abc9` backend).
+
 **Notes / caveats:**
 - **Payments are deferred** (user unsure whether PayPal is required or removed entirely) — confirm before building anything payment-related.
 - **Payments** — DbSet exists but there is **no `PaymentService` controller** yet; do not assume the payments endpoint exists (deferred — user deciding on PayPal).
+- **Support tickets (Item 11) — backend is NEW and the migration is pending.** The `SupportTickets` table/service/controller now exist, but the `AddSupportTickets` EF migration **must be applied by the user** (`dotnet ef database update` / VS `Update-Database`) before the Support module works against the live DB. Until then the Support screen shows fetch errors at runtime (offline widget tests already pass).
 - **Notifications** — `NotificationService.cs` + `NotificationsController.cs` **DO exist and are fully implemented** (verified: `GET/POST`, `GET/{id}`, `PATCH /{id}/mark-as-read`, `PATCH /mark-all-as-read/{userId}`, `DELETE`). `POST /Notifications` requires a single `UserId`, so admin "broadcast to all" is a **client-side fan-out** (no backend change).
 - **Job `status` values:** `Open, InProgress, Completed, Cancelled`; application statuses `Pending, Accepted, Rejected, Withdrawn`.
 - **Admin seed user:** `berinm` / `test` with the `Administrator` role. Gate admin screens on `user.hasRole('Administrator')`.
