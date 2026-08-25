@@ -21,8 +21,9 @@ namespace QuickWork.Services.Database
         public DbSet<Message> Messages { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Payment> Payments { get; set; }
-        public DbSet<Notification> Notifications { get; set; }
+                public DbSet<Notification> Notifications { get; set; }
         public DbSet<UserSkill> UserSkills { get; set; }
+        public DbSet<SupportTicket> SupportTickets { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -261,10 +262,32 @@ namespace QuickWork.Services.Database
             modelBuilder.Entity<UserSkill>()
                 .HasIndex(s => s.UserId);
 
-            modelBuilder.Entity<UserSkill>()
+                        modelBuilder.Entity<UserSkill>()
                 .HasOne(s => s.User)
                 .WithMany()
                 .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure SupportTicket entity
+            modelBuilder.Entity<SupportTicket>()
+                .HasIndex(t => t.UserId);
+
+            modelBuilder.Entity<SupportTicket>()
+                .HasIndex(t => t.Status);
+
+            modelBuilder.Entity<SupportTicket>()
+                .HasIndex(t => t.Priority);
+
+            modelBuilder.Entity<SupportTicket>()
+                .HasIndex(t => t.Category);
+
+            modelBuilder.Entity<SupportTicket>()
+                .HasIndex(t => t.CreatedAt);
+
+            modelBuilder.Entity<SupportTicket>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Seed initial data
