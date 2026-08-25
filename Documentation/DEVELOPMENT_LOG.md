@@ -268,7 +268,7 @@ Three user-reported bugs were fixed in the Mobile app (`QuickWork/UI/QuickWork_M
 ### Admin — Phase 2 (NEXT — planned)
 Scope (from project requirements), to confirm/refine with the user module by module:
 1. Overview by job offer / job demand categories (analytics). — ✅ **done (Phase 1 dashboard)**; can extend.
-2. Adding new jobs / services.
+2. Adding new jobs / services. — **superseded** — admin does **not** publish on behalf of users; instead admin **views & deletes** user-posted jobs (done: Phase 2 Item 2-LITE — see the dedicated entry below).
 3. Sending relevant notifications to users. — ✅ **done (Notifications / announcements module, Phase 2 item 3)** — see the dedicated Phase 2 entry below.
 4. Communication between users via messages.
 5. Sending a request for a requested job / offered service.
@@ -317,6 +317,16 @@ Recommended order to propose to the user: analytics/dashboard + user administrat
 - **Modified:** `admin_repository.dart` (`fetchNotifications`, `createNotification`, `deleteNotification`), `admin_provider.dart` (notification state/getters + `loadNotifications()`, `sendAnnouncement()`, `deleteNotification()`), `home_screen.dart` (added **Notify** destination to the rail, bottom bar, and `_tabs`).
 - **Tests:** 4 new — screen render/empty history, announcement fan-out to every user (asserts one `POST` per user), empty-field validation, history display + delete.
 - **Verification:** `flutter analyze` → **0 issues**; offline widget tests → **12 pass** (4 new + 8 existing), clean exit; `flutter build windows --debug` builds `quickwork_admin.exe`.
+- Committed by user.
+
+#### ✅ Admin — Phase 2, Item 2-LITE: Admin view/delete of user-posted jobs (DONE)
+- Extends the existing **Jobs** moderation screen with a **delete action per job row** (project item "Adding new jobs/services" was **superseded** — the admin should **not** publish jobs on behalf of users; instead it **views and deletes** user-posted jobs as moderation).
+- **Confirmed with the user:** delete = **hard delete** via `DELETE /JobPostings/{id}`; the backend **cascades** to the job's applications, messages, reviews and payments (their EF FK relationships use `DeleteBehavior.Cascade` in `QuickWorkDbContext.cs`) — verified via the DbContext and by inspecting `JobPostingService.DeleteAsync` (plain `Remove` + `SaveChangesAsync`, no ownership/role check on the endpoint). Chosen approach = **minimal** (delete icon + confirmation dialog), mirroring the Reviews moderation pattern — no separate read-only detail view.
+- Each job row now shows a red **delete icon button** → a **confirmation dialog** ("Delete job?" with the cascade consequence spelled out) → on confirm calls `AdminProvider.deleteJob(job)` → on success removes the row + green snackbar; on failure keeps the row + red snackbar.
+- **No backend change** — the `DELETE /JobPostings/{id}` endpoint already exists.
+- **Modified:** `admin_repository.dart` (`deleteJob(id)` → `DELETE /JobPostings/{id}`), `admin_provider.dart` (`isDeletingJob`/`jobDeleteError` state + `deleteJob(AdminJobPostingModel)` which drops the row from `_jobs` on success), `jobs_screen.dart` (`_JobTile` gained an `onDelete`/`deleting` pair + the trailing delete button + `_confirmAndDelete`).
+- **Tests:** new `test/jobs_screen_test.dart` — 4 tests (delete action present on every row; confirmation dialog shown + cancel keeps the row; confirming removes the job; failure keeps the row + shows the error).
+- **Verification:** `flutter analyze` → **0 issues**; offline widget tests → **16 pass** (4 new + 12 existing); `flutter build windows --debug` builds `quickwork_admin.exe`.
 - Committed by user.
 
 **Notes / caveats:**
