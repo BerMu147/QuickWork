@@ -6,10 +6,12 @@ import '../../auth/models/role_model.dart';
 import '../models/admin_job_application_model.dart';
 import '../models/admin_job_posting_model.dart';
 import '../models/admin_review_model.dart';
+import '../models/admin_support_ticket_model.dart';
 import '../models/city_option.dart';
 import '../models/gender_option.dart';
 import '../models/notification_model.dart';
 import '../models/notification_payload.dart';
+import '../models/support_ticket_payloads.dart';
 import '../models/user_response_model.dart' show AdminUserModel;
 import '../models/user_activation_payload.dart';
 import '../models/user_update_payload.dart';
@@ -370,6 +372,102 @@ class AdminRepository {
   Future<void> deleteNotification(int id) async {
     try {
       await _apiClient.dio.delete<Map<String, dynamic>>('/Notifications/$id');
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Support tickets (help desk)
+  // ---------------------------------------------------------------------------
+
+  /// Fetches support tickets matching [filters]. Supports pagination and
+  /// filtering by status, priority and category.
+  Future<List<AdminSupportTicketModel>> fetchSupportTickets({
+    int? userId,
+    String? status,
+    String? priority,
+    String? category,
+    int? page,
+    int? pageSize,
+  }) async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/SupportTickets',
+        queryParameters: {
+          if (userId != null) 'UserId': userId,
+          if (status != null && status.isNotEmpty) 'Status': status,
+          if (priority != null && priority.isNotEmpty) 'Priority': priority,
+          if (category != null && category.isNotEmpty) 'Category': category,
+          if (page != null) 'Page': page,
+          'PageSize': pageSize ?? 200,
+          'IncludeTotalCount': true,
+        },
+      );
+
+      final items = response.data?['items'] as List<dynamic>? ?? [];
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(AdminSupportTicketModel.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Creates a new support ticket via `POST /SupportTickets`.
+  Future<AdminSupportTicketModel> createSupportTicket(
+    SupportTicketCreatePayload payload,
+  ) async {
+    try {
+      final response = await _apiClient.dio.post<Map<String, dynamic>>(
+        '/SupportTickets',
+        data: payload.toJson(),
+      );
+      return AdminSupportTicketModel.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Applies an administrator's reply (and optional status) via
+  /// `PATCH /SupportTickets/{id}/reply`.
+  Future<AdminSupportTicketModel> replySupportTicket(
+    int id,
+    SupportTicketReplyPayload payload,
+  ) async {
+    try {
+      final response = await _apiClient.dio.patch<Map<String, dynamic>>(
+        '/SupportTickets/$id/reply',
+        data: payload.toJson(),
+      );
+      return AdminSupportTicketModel.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Advances a ticket's lifecycle status via
+  /// `PATCH /SupportTickets/{id}/status`.
+  Future<AdminSupportTicketModel> updateSupportTicketStatus(
+    int id,
+    SupportTicketStatusPayload payload,
+  ) async {
+    try {
+      final response = await _apiClient.dio.patch<Map<String, dynamic>>(
+        '/SupportTickets/$id/status',
+        data: payload.toJson(),
+      );
+      return AdminSupportTicketModel.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Soft-deletes (deactivates) a ticket via `DELETE /SupportTickets/{id}`.
+  Future<void> deleteSupportTicket(int id) async {
+    try {
+      await _apiClient.dio.delete<Map<String, dynamic>>('/SupportTickets/$id');
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

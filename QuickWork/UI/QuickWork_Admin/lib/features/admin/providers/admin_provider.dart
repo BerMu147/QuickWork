@@ -7,6 +7,7 @@ import '../data/admin_repository.dart';
 import '../models/admin_job_application_model.dart';
 import '../models/admin_job_posting_model.dart';
 import '../models/admin_review_model.dart';
+import '../models/admin_support_ticket_model.dart';
 import '../models/category_model.dart';
 import '../models/city_option.dart';
 import '../models/gender_option.dart';
@@ -14,6 +15,7 @@ import '../models/market_analytics_model.dart';
 import '../models/notification_model.dart';
 import '../models/notification_payload.dart';
 import '../models/report_models.dart';
+import '../models/support_ticket_payloads.dart';
 import '../models/user_response_model.dart';
 import '../models/user_activation_payload.dart';
 import '../models/user_update_payload.dart';
@@ -132,6 +134,13 @@ class AdminProvider extends ChangeNotifier {
   bool _isLoadingMarket = false;
   String? _marketError;
 
+  // ---- Support tickets ------------------------------------------------------
+  List<AdminSupportTicketModel> _supportTickets = [];
+  bool _isLoadingSupportTickets = false;
+  String? _supportTicketsError;
+  bool _isDeletingSupportTicket = false;
+  String? _supportTicketActionError;
+
   // ---- Getters --------------------------------------------------------------
   DashboardSummary get summary => _summary;
   List<CategoryOverviewItem> get categoryOverview => _categoryOverview;
@@ -190,6 +199,12 @@ class AdminProvider extends ChangeNotifier {
   MarketAnalyticsData get marketAnalytics => _marketAnalytics;
   bool get isLoadingMarket => _isLoadingMarket;
   String? get marketError => _marketError;
+
+  List<AdminSupportTicketModel> get supportTickets => _supportTickets;
+  bool get isLoadingSupportTickets => _isLoadingSupportTickets;
+  String? get supportTicketsError => _supportTicketsError;
+  bool get isDeletingSupportTicket => _isDeletingSupportTicket;
+  String? get supportTicketActionError => _supportTicketActionError;
 
   // ---------------------------------------------------------------------------
   // Market / Analytics (Phase 2, Item 7)
@@ -367,6 +382,90 @@ class AdminProvider extends ChangeNotifier {
       cityDemand: cityDemand,
       laborSupply: laborSupply,
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Support tickets (help desk)
+  // ---------------------------------------------------------------------------
+
+  /// Loads support tickets (optionally filtered by [status]).
+  Future<void> loadSupportTickets({String? status}) async {
+    _isLoadingSupportTickets = true;
+    _supportTicketsError = null;
+    notifyListeners();
+
+    try {
+      _supportTickets = await _repository.fetchSupportTickets(status: status);
+      _isLoadingSupportTickets = false;
+    } catch (e) {
+      _isLoadingSupportTickets = false;
+      _supportTicketsError = e.toString();
+    }
+    notifyListeners();
+  }
+
+  /// Applies an administrator's reply to a ticket and refreshes the list.
+  Future<bool> replyToSupportTicket(AdminSupportTicketModel ticket, String reply) async {
+    _supportTicketActionError = null;
+    notifyListeners();
+
+    try {
+      final updated = await _repository.replySupportTicket(
+        ticket.id,
+        SupportTicketReplyPayload(adminReply: reply),
+      );
+      _supportTickets = _supportTickets
+          .map((t) => t.id == updated.id ? updated : t)
+          .toList();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _supportTicketActionError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Advances a ticket's lifecycle status and refreshes the list.
+  Future<bool> updateSupportTicketStatus(AdminSupportTicketModel ticket, String status) async {
+    _supportTicketActionError = null;
+    notifyListeners();
+
+    try {
+      final updated = await _repository.updateSupportTicketStatus(
+        ticket.id,
+        SupportTicketStatusPayload(status: status),
+      );
+      _supportTickets = _supportTickets
+          .map((t) => t.id == updated.id ? updated : t)
+          .toList();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _supportTicketActionError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Soft-deletes (deactivates) a ticket and refreshes the list.
+  Future<bool> deleteSupportTicket(AdminSupportTicketModel ticket) async {
+    _isDeletingSupportTicket = true;
+    _supportTicketActionError = null;
+    notifyListeners();
+
+    try {
+      await _repository.deleteSupportTicket(ticket.id);
+      _supportTickets = _supportTickets.where((t) => t.id != ticket.id).toList();
+      _isDeletingSupportTicket = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isDeletingSupportTicket = false;
+      _supportTicketActionError = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 
   // ---------------------------------------------------------------------------
